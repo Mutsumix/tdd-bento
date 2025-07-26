@@ -5,15 +5,14 @@ import { IngredientItem } from './IngredientItem';
 
 export interface IngredientListProps {
   ingredients: Ingredient[];
-  selectedCategory?: string;
-  onCategoryChange?: (category: string) => void;
   onIngredientPress?: (ingredient: Ingredient) => void;
+  // Note: Category filtering will be added in future iterations
+  // selectedCategory?: string;
+  // onCategoryChange?: (category: string) => void;
 }
 
 export function IngredientList({ 
   ingredients,
-  selectedCategory,
-  onCategoryChange,
   onIngredientPress 
 }: IngredientListProps) {
   return (

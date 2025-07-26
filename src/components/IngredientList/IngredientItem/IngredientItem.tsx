@@ -7,6 +7,32 @@ export interface IngredientItemProps {
   onPress?: (ingredient: Ingredient) => void;
 }
 
+// Constants for styling consistency
+const ITEM_DIMENSIONS = {
+  WIDTH: 80,
+  HEIGHT: 80,
+} as const;
+
+const SPACING = {
+  BORDER_RADIUS: 8,
+  BORDER_WIDTH: 1,
+  MARGIN_HORIZONTAL: 4,
+  CONTENT_PADDING: 4,
+  TEXT_SPACING: 2,
+} as const;
+
+const FONT_SIZES = {
+  NAME: 12,
+  CATEGORY: 10,
+} as const;
+
+const COLORS = {
+  BACKGROUND: '#f0f0f0',
+  BORDER: '#ddd',
+  TEXT_PRIMARY: '#333',
+  TEXT_SECONDARY: '#666',
+} as const;
+
 export function IngredientItem({ ingredient, onPress }: IngredientItemProps) {
   return (
     <TouchableOpacity
@@ -25,30 +51,30 @@ export function IngredientItem({ ingredient, onPress }: IngredientItemProps) {
 
 const styles = StyleSheet.create({
   container: {
-    width: 80,
-    height: 80,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    marginHorizontal: 4,
+    width: ITEM_DIMENSIONS.WIDTH,
+    height: ITEM_DIMENSIONS.HEIGHT,
+    backgroundColor: COLORS.BACKGROUND,
+    borderRadius: SPACING.BORDER_RADIUS,
+    borderWidth: SPACING.BORDER_WIDTH,
+    borderColor: COLORS.BORDER,
+    marginHorizontal: SPACING.MARGIN_HORIZONTAL,
     overflow: 'hidden'
   },
   content: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 4
+    padding: SPACING.CONTENT_PADDING
   },
   name: {
-    fontSize: 12,
+    fontSize: FONT_SIZES.NAME,
     fontWeight: 'bold',
     textAlign: 'center',
-    color: '#333'
+    color: COLORS.TEXT_PRIMARY
   },
   category: {
-    fontSize: 10,
-    color: '#666',
-    marginTop: 2
+    fontSize: FONT_SIZES.CATEGORY,
+    color: COLORS.TEXT_SECONDARY,
+    marginTop: SPACING.TEXT_SPACING
   }
 });
