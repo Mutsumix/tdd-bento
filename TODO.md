@@ -1,9 +1,10 @@
 # TODO リスト
 
 ## In Progress
-- [🔴 RED] AsyncStorageのセットアップと基本的な永続化 - 失敗テスト作成中
+- [🟢 GREEN] AsyncStorageのセットアップと基本的な永続化 - 実装中
   - Started: 2025-01-26 17:35
   - Goal: AsyncStorageでのユーザー追加食材とお弁当状態の永続化機能
+  - Red completed: 2025-01-26 17:40
 
 ## Next
 - [ ] ドラッグ＆ドロップ機能の実装
