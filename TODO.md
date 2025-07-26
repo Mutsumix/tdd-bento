@@ -1,11 +1,12 @@
 # TODO リスト
 
 ## In Progress
-- [🔄 REFACTOR] 初期食材データ（20種類）の作成 - リファクタリング中
+- [📝 FEEDBACK] 初期食材データ（20種類）の作成 - 設計フィードバック中
   - Started: 2025-01-26 15:25
   - Goal: 20種類の食材データとそのバリデーション機能を実装
   - Red completed: 2025-01-26 15:28
   - Green completed: 2025-01-26 15:32
+  - Refactor completed: 2025-01-26 15:38
 
 ## Next
 - [ ] 基本的なプロジェクト構造の作成

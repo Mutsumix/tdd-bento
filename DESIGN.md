@@ -321,6 +321,93 @@ canPlaceIngredientInPartition(ingredient, partition, existing) {
 }
 ```
 
+### 初期食材データの実装洞察
+
+#### データ構造の最適化
+```typescript
+// 構造化されたデータ管理
+const MAIN_DISHES: Ingredient[] = [...];     // 5種類（主菜）
+const SIDE_DISHES: Ingredient[] = [...];     // 8種類（副菜）
+const OTHER_ITEMS: Ingredient[] = [...];     // 7種類（その他・果物）
+
+const INITIAL_INGREDIENTS = [...MAIN_DISHES, ...SIDE_DISHES, ...OTHER_ITEMS];
+```
+
+#### 共通化によるコード効率化
+```typescript
+// ヘルパー関数で重複排除
+function createIngredient(
+  id, name, category, color, nutrition, cookingTime, cost, size,
+  overrides = {}
+): Ingredient {
+  return {
+    ...基本値,
+    ...引数,
+    ...COMMON_DEFAULTS,    // season: 'all', isFrozen: false, etc.
+    ...overrides          // 個別の例外設定
+  };
+}
+```
+
+#### 食材データの栄養バランス設計
+- **主菜**: 高タンパク質（60-85）、中程度ビタミン（15-40）
+- **副菜**: 高ビタミン（40-95）、中程度食物繊維（30-90）
+- **その他**: バランス型、特殊用途（いちご：ビタミン100）
+
+#### 実用性重視の属性設定
+```typescript
+// 調理時間の現実的な設定
+cookingTime: {
+  冷凍食品: 3-8分     // エビフライ、枝豆
+  そのまま可: 0分      // プチトマト、チーズ、梅干し
+  簡単調理: 5-12分    // ブロッコリー、ウインナー
+  本格調理: 15-20分   // 唐揚げ、ハンバーグ、ひじき
+}
+
+// コスト設定（円）
+cost: {
+  調味料系: 30-40     // 梅干し、たくあん
+  基本食材: 50-90     // ごはん、野菜類
+  加工品: 100-150     // 卵焼き、チーズ、ウインナー
+  高級食材: 200-300   // 鮭、いちご、ハンバーグ
+}
+```
+
+#### フィルタリング機能の設計
+```typescript
+// カテゴリフィルタ（料理の種類別）
+getIngredientsByCategory('main')    // 主菜5種類
+getIngredientsByCategory('side')    // 副菜8種類
+
+// 属性フィルタ（利便性重視）
+getFrozenIngredients()              // 時短料理用
+getReadyToEatIngredients()          // そのまま使用可能
+
+// 季節フィルタ（旬の食材）
+getIngredientsBySeason('spring')    // いちご + all-season食材
+getIngredientsBySeason('summer')    // 枝豆 + all-season食材
+```
+
+#### データ整合性チェック機能
+```typescript
+validateInitialIngredientsData() {
+  // 1. ID重複チェック
+  // 2. 名前重複チェック  
+  // 3. 個別バリデーション（栄養値0-100、必須フィールド等）
+  // 4. 総数チェック（期待値20種類）
+}
+```
+
+#### カラーパレットの戦略的配分
+- **赤系**: プチトマト、鮭、エビフライ、にんじん、ウインナー、梅干し、いちご（7種類）
+- **緑系**: ブロッコリー、ほうれん草、枝豆（3種類）
+- **茶系**: 唐揚げ、ハンバーグ、きんぴらごぼう（3種類） 
+- **白系**: ポテトサラダ、白ごはん、おにぎり（3種類）
+- **黄系**: 卵焼き、チーズ、たくあん（3種類）
+- **黒系**: ひじきの煮物（1種類）
+
+→ 「いろどり重視」提案で視覚的バランスを取りやすい配分
+
 ## セキュリティ・プライバシー
 - ローカルデータのみ使用
 - 外部通信なし
