@@ -1,10 +1,11 @@
 # TODO リスト
 
 ## In Progress
-- [🟢 GREEN] Expo プロジェクトの初期セットアップ - 実装中
+- [🔄 REFACTOR] Expo プロジェクトの初期セットアップ - リファクタリング中
   - Started: 2025-01-26 14:35
   - Goal: Expoプロジェクトを作成し、TypeScriptで動作確認
   - Red completed: 2025-01-26 14:38
+  - Green completed: 2025-01-26 14:44
 
 ## Next
 - [ ] Expo プロジェクトの初期セットアップ
