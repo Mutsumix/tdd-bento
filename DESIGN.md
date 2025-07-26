@@ -541,6 +541,74 @@ IngredientList → ScrollView + IngredientItem[]
 IngredientItem → TouchableOpacity + 食材情報表示
 ```
 
+### AsyncStorageサービスの実装洞察
+
+#### ジェネリクス型による共通化パターン
+```typescript
+// 型安全な汎用データ操作メソッド
+private static async saveData<T>(key: string, data: T): Promise<void> {
+  const jsonData = JSON.stringify(data);
+  await AsyncStorage.setItem(key, jsonData);
+}
+
+private static async loadData<T>(key: string): Promise<T[]> {
+  // データ破損への堅牢性を内包
+  try {
+    return JSON.parse(jsonData) as T[];
+  } catch (error) {
+    if (error instanceof SyntaxError) return [];
+    throw error;
+  }
+}
+```
+
+#### データ永続化のベストプラクティス
+```typescript
+// 一貫性のあるストレージキー管理
+const STORAGE_KEYS = {
+  USER_INGREDIENTS: 'user_ingredients',
+  BENTO_STATE: 'bento_state',
+} as const;
+
+// データ破損への対応戦略
+// 1. SyntaxError（JSON破損）→ 空配列を返す
+// 2. その他のエラー → 呼び出し元に伝播
+// 3. null（データなし）→ 空配列を返す
+```
+
+#### AsyncStorageの使用パターン
+```typescript
+// CRUD操作の実装パターン
+// Create/Update: saveData + loadData + 配列操作
+// Read: loadData
+// Delete: loadData + filter + saveData
+// Clear: AsyncStorage.removeItem
+```
+
+#### サービス層設計の利点
+1. **テスタビリティ**: AsyncStorageのモックが容易
+2. **保守性**: ビジネスロジックとストレージ操作の分離
+3. **拡張性**: 新しいデータ型への対応が簡単
+4. **一貫性**: 全てのストレージ操作が統一されたインターフェース
+
+#### エラーハンドリング戦略
+- **不要なtry-catch除去**: エラーの自然な伝播を活用
+- **意図的なエラー処理**: データ破損時の graceful degradation
+- **テスト観点**: エラーケースの網羅的なテスト設計
+
+#### 今後の拡張予定
+```typescript
+// 可能な拡張ポイント
+interface StorageServiceExtensions {
+  // 設定データの永続化
+  saveAppSettings(settings: AppSettings): Promise<void>;
+  // お気に入りレシピの永続化
+  saveFavoriteRecipes(recipes: Recipe[]): Promise<void>;
+  // 使用履歴の永続化
+  saveUsageHistory(history: UsageEvent[]): Promise<void>;
+}
+```
+
 ## 今後の拡張ポイント
 1. 仕切りの自由配置
 2. お弁当箱形状の追加
