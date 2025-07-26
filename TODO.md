@@ -1,10 +1,11 @@
 # TODO リスト
 
 ## In Progress
-- [🟢 GREEN] BentoBoxCanvasコンポーネントの基本実装 - 実装中
+- [🔄 REFACTOR] BentoBoxCanvasコンポーネントの基本実装 - リファクタリング中
   - Started: 2025-01-26 16:20
   - Goal: お弁当箱の表示、パーティション表示、配置済み食材表示の基本機能
   - Red completed: 2025-01-26 16:23
+  - Green completed: 2025-01-26 16:30
 
 ## Next
 - [ ] AsyncStorageのセットアップと基本的な永続化

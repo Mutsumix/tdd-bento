@@ -1,6 +1,8 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ViewStyle } from 'react-native';
 import { BentoBox, PlacedIngredient } from '@/types';
+import { PartitionArea } from './PartitionArea';
+import { PlacedIngredientItem } from './PlacedIngredientItem';
 
 export interface BentoBoxCanvasProps {
   bentoBox: BentoBox;
@@ -13,55 +15,31 @@ export function BentoBoxCanvas({
   placedIngredients,
   onIngredientPress 
 }: BentoBoxCanvasProps) {
+  const containerStyle: ViewStyle = {
+    width: bentoBox.dimensions.width,
+    height: bentoBox.dimensions.height
+  };
+
   return (
     <View 
       testID="bento-box-container"
-      style={[
-        styles.container,
-        {
-          width: bentoBox.dimensions.width,
-          height: bentoBox.dimensions.height
-        }
-      ]}
+      style={[styles.container, containerStyle]}
     >
       {/* Render partitions */}
       {bentoBox.partitions.map((partition) => (
-        <View
+        <PartitionArea
           key={partition.id}
-          testID={`partition-${partition.id}`}
-          style={[
-            styles.partition,
-            {
-              position: 'absolute',
-              left: partition.bounds.x,
-              top: partition.bounds.y,
-              width: partition.bounds.width,
-              height: partition.bounds.height
-            }
-          ]}
+          partition={partition}
         />
       ))}
 
       {/* Render placed ingredients */}
       {placedIngredients.map((placedIngredient) => (
-        <TouchableOpacity
+        <PlacedIngredientItem
           key={placedIngredient.id}
-          testID={`placed-ingredient-${placedIngredient.id}`}
-          style={[
-            styles.placedIngredient,
-            {
-              position: 'absolute',
-              left: placedIngredient.position.x,
-              top: placedIngredient.position.y,
-              width: placedIngredient.size.width,
-              height: placedIngredient.size.height
-            }
-          ]}
-          onPress={() => onIngredientPress?.(placedIngredient)}
-          disabled={!onIngredientPress}
-        >
-          <View style={styles.ingredientContent} />
-        </TouchableOpacity>
+          placedIngredient={placedIngredient}
+          onPress={onIngredientPress}
+        />
       ))}
     </View>
   );
@@ -75,19 +53,5 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
     position: 'relative'
-  },
-  partition: {
-    borderWidth: 1,
-    borderColor: '#999',
-    borderStyle: 'dashed'
-  },
-  placedIngredient: {
-    backgroundColor: '#e0e0e0',
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: '#666'
-  },
-  ingredientContent: {
-    flex: 1
   }
 });

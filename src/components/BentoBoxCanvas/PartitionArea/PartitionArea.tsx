@@ -1,14 +1,32 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, StyleSheet, ViewStyle } from 'react-native';
+import { Partition } from '@/types';
 
 export interface PartitionAreaProps {
-  // Props will be defined later
+  partition: Partition;
 }
 
-export function PartitionArea(props: PartitionAreaProps) {
+export function PartitionArea({ partition }: PartitionAreaProps) {
+  const dynamicStyle: ViewStyle = {
+    position: 'absolute',
+    left: partition.bounds.x,
+    top: partition.bounds.y,
+    width: partition.bounds.width,
+    height: partition.bounds.height
+  };
+
   return (
-    <View testID="partition-area">
-      {/* Implementation will be added later */}
-    </View>
+    <View
+      testID={`partition-${partition.id}`}
+      style={[styles.partition, dynamicStyle]}
+    />
   );
 }
+
+const styles = StyleSheet.create({
+  partition: {
+    borderWidth: 1,
+    borderColor: '#999',
+    borderStyle: 'dashed'
+  }
+});
