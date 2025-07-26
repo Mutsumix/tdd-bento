@@ -234,6 +234,7 @@ interface IngredientsState {
 - TypeScriptフル活用（strict: true）
 - パス解決設定：@/* → src/*
 - テスト環境：ts-jest（jest-expoは回避）
+- React Native対応：jest.setup.jsでモック設定
 
 ### 食材データモデルの実装洞察
 
@@ -407,6 +408,42 @@ validateInitialIngredientsData() {
 - **黒系**: ひじきの煮物（1種類）
 
 → 「いろどり重視」提案で視覚的バランスを取りやすい配分
+
+### 基本的なプロジェクト構造の実装洞察
+
+#### コンポーネント階層の設計
+```
+src/components/
+├── BentoDesigner/           # メイン画面コンポーネント
+├── BentoBoxCanvas/          # お弁当箱表示エリア
+│   ├── PartitionArea/       # 仕切りエリア
+│   └── PlacedIngredientItem/ # 配置済み食材アイテム
+├── IngredientList/          # 食材リスト
+│   └── IngredientItem/      # 食材アイテム
+├── ActionBar/               # アクションボタン群
+├── SuggestionModal/         # 提案モーダル
+│   ├── CriteriaSelector/    # 評価軸選択
+│   └── SuggestionDisplay/   # 提案表示
+└── AddIngredientModal/      # 食材追加モーダル
+```
+
+#### Context設計パターン
+```typescript
+// 状態管理の分離
+BentoContext    → お弁当の配置状態・選択基準
+IngredientsContext → 食材マスタデータ・ユーザー追加食材
+```
+
+#### テスト設定の最適化
+- **React Native Mock**: Jest環境でRNコンポーネントを正しく処理
+- **JSX Transform**: ts-jest設定でreact-jsx使用
+- **Module Resolution**: @/* パス解決でクリーンなimport
+
+#### プロジェクト構造の利点
+1. **モジュール化**: 各コンポーネントが独立してテスト・開発可能
+2. **型安全性**: TypeScript interface でProps定義
+3. **拡張性**: サブコンポーネントの段階的追加が容易
+4. **保守性**: index.ts で export を整理
 
 ## セキュリティ・プライバシー
 - ローカルデータのみ使用
