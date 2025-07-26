@@ -1,17 +1,12 @@
 # TODO リスト
 
 ## In Progress
-- [📝 FEEDBACK] Expo プロジェクトの初期セットアップ - 設計フィードバック中
-  - Started: 2025-01-26 14:35
-  - Goal: Expoプロジェクトを作成し、TypeScriptで動作確認
-  - Red completed: 2025-01-26 14:38
-  - Green completed: 2025-01-26 14:44
-  - Refactor completed: 2025-01-26 14:46
+- [🔴 RED] 食材データモデルの実装とテスト - 失敗テスト作成中
+  - Started: 2025-01-26 14:50
+  - Goal: Ingredientインターフェースとバリデーション機能を実装
 
 ## Next
-- [ ] Expo プロジェクトの初期セットアップ
 - [ ] 基本的なプロジェクト構造の作成
-- [ ] 食材データモデルの実装とテスト
 - [ ] お弁当箱データモデルの実装とテスト
 - [ ] AsyncStorageのセットアップと基本的な永続化
 - [ ] BentoBoxCanvasコンポーネントの基本実装
@@ -29,3 +24,5 @@
 - [ ] メイン画面の統合とスタイリング
 
 ## Done
+- [✅] Expo プロジェクトの初期セットアップ (2025-01-26 14:48)
+  - Red/Green/Refactor/Feedback 全段階完了
