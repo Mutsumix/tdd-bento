@@ -1,14 +1,46 @@
 import React from 'react';
-import { View } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
+import { Ingredient } from '@/types';
+import { IngredientItem } from './IngredientItem';
 
 export interface IngredientListProps {
-  // Props will be defined later
+  ingredients: Ingredient[];
+  selectedCategory?: string;
+  onCategoryChange?: (category: string) => void;
+  onIngredientPress?: (ingredient: Ingredient) => void;
 }
 
-export function IngredientList(props: IngredientListProps) {
+export function IngredientList({ 
+  ingredients,
+  selectedCategory,
+  onCategoryChange,
+  onIngredientPress 
+}: IngredientListProps) {
   return (
-    <View testID="ingredient-list">
-      {/* Implementation will be added later */}
-    </View>
+    <ScrollView
+      testID="ingredient-list"
+      horizontal={true}
+      showsHorizontalScrollIndicator={true}
+      style={styles.container}
+      contentContainerStyle={styles.content}
+    >
+      {ingredients.map((ingredient) => (
+        <IngredientItem
+          key={ingredient.id}
+          ingredient={ingredient}
+          onPress={onIngredientPress}
+        />
+      ))}
+    </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: '#fff'
+  },
+  content: {
+    paddingHorizontal: 16,
+    paddingVertical: 8
+  }
+});

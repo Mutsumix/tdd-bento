@@ -1,9 +1,10 @@
 # TODO リスト
 
 ## In Progress
-- [🔴 RED] IngredientListコンポーネントの実装 - 失敗テスト作成中
+- [🟢 GREEN] IngredientListコンポーネントの実装 - 実装中
   - Started: 2025-01-26 16:40
   - Goal: 横スクロール食材リスト、IngredientItem表示、カテゴリフィルタリング機能
+  - Red completed: 2025-01-26 16:43
 
 ## Next
 - [ ] AsyncStorageのセットアップと基本的な永続化

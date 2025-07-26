@@ -6,7 +6,7 @@ jest.mock('react-native', () => {
     View: ({ children, testID, style, ...props }) => {
       const flatStyle = style ? (Array.isArray(style) ? Object.assign({}, ...style.filter(Boolean)) : style) : {};
       return React.createElement('div', { 
-        'data-testid': testID,
+        testID: testID,
         style: flatStyle,
         ...props 
       }, children);
@@ -15,28 +15,48 @@ jest.mock('react-native', () => {
     Text: ({ children, testID, style, ...props }) => {
       const flatStyle = style ? (Array.isArray(style) ? Object.assign({}, ...style.filter(Boolean)) : style) : {};
       return React.createElement('span', { 
-        'data-testid': testID,
+        testID: testID,
         style: flatStyle,
         ...props 
       }, children);
     },
     
-    ScrollView: ({ children, testID, style, ...props }) => {
+    ScrollView: ({ children, testID, style, contentContainerStyle, horizontal, showsHorizontalScrollIndicator, showsVerticalScrollIndicator, ...props }) => {
       const flatStyle = style ? (Array.isArray(style) ? Object.assign({}, ...style.filter(Boolean)) : style) : {};
+      const htmlProps = Object.keys(props).reduce((acc, key) => {
+        // Only pass through standard HTML props
+        if (!key.startsWith('shows') && !key.startsWith('keyboardShould') && !key.startsWith('onScroll')) {
+          acc[key] = props[key];
+        }
+        return acc;
+      }, {});
+      
       return React.createElement('div', { 
-        'data-testid': testID,
+        testID: testID,
         style: flatStyle,
-        ...props 
+        horizontal: horizontal,
+        showsHorizontalScrollIndicator: showsHorizontalScrollIndicator,
+        showsVerticalScrollIndicator: showsVerticalScrollIndicator,
+        ...htmlProps
       }, children);
     },
     
-    TouchableOpacity: ({ children, testID, onPress, style, ...props }) => {
+    TouchableOpacity: ({ children, testID, onPress, style, disabled, ...props }) => {
       const flatStyle = style ? (Array.isArray(style) ? Object.assign({}, ...style.filter(Boolean)) : style) : {};
-      return React.createElement('button', { 
-        'data-testid': testID, 
+      const htmlProps = Object.keys(props).reduce((acc, key) => {
+        // Only pass through standard HTML props
+        if (!key.startsWith('accessible') && !key.startsWith('active')) {
+          acc[key] = props[key];
+        }
+        return acc;
+      }, {});
+      
+      return React.createElement('button', {
+        testID: testID, 
         onClick: onPress,
         style: flatStyle,
-        ...props 
+        disabled: disabled,
+        ...htmlProps
       }, children);
     },
       
