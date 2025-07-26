@@ -484,6 +484,63 @@ style={[styles.static, dynamicStyle]}
 - toJSON()を使用したスナップショットテストが有効
 - react-test-rendererの非推奨警告は無視可能（現時点）
 
+### IngredientListコンポーネントの実装洞察
+
+#### リファクタリングパターンの確立
+```typescript
+// 定数抽出による保守性向上
+const ITEM_DIMENSIONS = { WIDTH: 80, HEIGHT: 80 } as const;
+const SPACING = { BORDER_RADIUS: 8, MARGIN_HORIZONTAL: 4 } as const;
+const COLORS = { BACKGROUND: '#f0f0f0', BORDER: '#ddd' } as const;
+
+// StyleSheet.createでの定数利用
+const styles = StyleSheet.create({
+  container: {
+    width: ITEM_DIMENSIONS.WIDTH,
+    backgroundColor: COLORS.BACKGROUND,
+    borderRadius: SPACING.BORDER_RADIUS,
+  }
+});
+```
+
+#### Jest環境での最適化
+```typescript
+// React Nativeモック用ヘルパー関数
+const flattenStyle = (style) => Array.isArray(style) ? Object.assign({}, ...style.filter(Boolean)) : style;
+const filterHtmlProps = (props, excludePatterns) => /* RN特有プロップのフィルタリング */;
+const createBaseProps = (testID, style, additionalProps) => /* 共通プロップ生成 */;
+```
+
+#### インターフェース設計の段階的拡張
+```typescript
+// 初期実装: 最小限のプロップス
+interface IngredientListProps {
+  ingredients: Ingredient[];
+  onIngredientPress?: (ingredient: Ingredient) => void;
+  // 将来拡張: selectedCategory, onCategoryChange
+}
+```
+
+#### テストID命名規則の統一
+- リストコンテナ: `ingredient-list`
+- 個別アイテム: `ingredient-item-${ingredient.id}`
+- コンポーネント階層を反映した識別子設計
+
+#### React Nativeテスト環境の注意点
+- `testID`プロップの使用（`data-testid`ではない）
+- StyleSheet.flattenメソッドのモック必要性
+- HTMLプロップスとRNプロップスの適切な分離
+- toJSON()を用いた構造テストの有効性
+
+#### コンポーネント責任分離の実践
+```typescript
+// 親コンポーネント: レイアウトとデータ管理
+IngredientList → ScrollView + IngredientItem[]
+
+// 子コンポーネント: 個別表示とインタラクション
+IngredientItem → TouchableOpacity + 食材情報表示
+```
+
 ## 今後の拡張ポイント
 1. 仕切りの自由配置
 2. お弁当箱形状の追加

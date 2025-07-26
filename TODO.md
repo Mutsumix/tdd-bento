@@ -1,11 +1,12 @@
 # TODO リスト
 
 ## In Progress
-- [🔄 REFACTOR] IngredientListコンポーネントの実装 - リファクタリング中
+- [📝 FEEDBACK] IngredientListコンポーネントの実装 - 設計フィードバック中
   - Started: 2025-01-26 16:40
   - Goal: 横スクロール食材リスト、IngredientItem表示、カテゴリフィルタリング機能
   - Red completed: 2025-01-26 16:43
   - Green completed: 2025-01-26 17:20
+  - Refactor completed: 2025-01-26 17:25
 
 ## Next
 - [ ] AsyncStorageのセットアップと基本的な永続化
