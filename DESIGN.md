@@ -235,6 +235,34 @@ interface IngredientsState {
 - パス解決設定：@/* → src/*
 - テスト環境：ts-jest（jest-expoは回避）
 
+### 食材データモデルの実装洞察
+
+#### バリデーション設計
+- 大きなバリデーション関数は小さな関数に分割して保守性向上
+- 定数の外部化で変更に柔軟に対応（VALID_CATEGORIES、VALID_COLORS）
+- 栄養値は0-100の数値範囲で統一
+
+#### ID生成戦略
+```typescript
+// パターン: ingredient-{timestamp}-{random}
+// 例: ingredient-1706247598123-abc123def
+generateIngredientId(): `ingredient-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+```
+
+#### デフォルト値設計
+```typescript
+DEFAULT_NUTRITION = { vitamin: 0, protein: 0, fiber: 0 }
+DEFAULT_SIZE = { width: 40, height: 30 } // ピクセル単位
+DEFAULT_ICON = 'circle' // 簡易図形から開始
+DEFAULT_SEASON = 'all' // 通年利用可能
+```
+
+#### バリデーション機能構成
+- `validateRequiredFields()`: 必須フィールドの型チェック
+- `validateNutrition()`: 栄養値の範囲チェック（0-100）
+- `validateEnumFields()`: カテゴリ・色の有効値チェック
+- nullish coalescing operator (??) で falsy 値の正確な処理
+
 ## セキュリティ・プライバシー
 - ローカルデータのみ使用
 - 外部通信なし

@@ -1,11 +1,12 @@
 # TODO リスト
 
 ## In Progress
-- [🔄 REFACTOR] 食材データモデルの実装とテスト - リファクタリング中
+- [📝 FEEDBACK] 食材データモデルの実装とテスト - 設計フィードバック中
   - Started: 2025-01-26 14:50
   - Goal: Ingredientインターフェースとバリデーション機能を実装
   - Red completed: 2025-01-26 14:52
   - Green completed: 2025-01-26 14:54
+  - Refactor completed: 2025-01-26 14:58
 
 ## Next
 - [ ] 基本的なプロジェクト構造の作成
