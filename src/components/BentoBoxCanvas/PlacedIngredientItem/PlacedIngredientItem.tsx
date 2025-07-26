@@ -1,6 +1,9 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
+import { View, TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
 import { PlacedIngredient } from '@/types';
+import { IngredientService } from '@/services/ingredientService';
+import { getColorCode, DEFAULT_COLOR } from '@/utils/colors';
+import { calculateIconSize, calculateFontSize, SIZING_CONFIG } from '@/utils/sizing';
 
 export interface PlacedIngredientItemProps {
   placedIngredient: PlacedIngredient;
@@ -11,6 +14,12 @@ export function PlacedIngredientItem({
   placedIngredient, 
   onPress 
 }: PlacedIngredientItemProps) {
+  const ingredient = IngredientService.findById(placedIngredient.ingredientId);
+  
+  // Calculate dynamic sizes based on container dimensions
+  const iconSize = calculateIconSize(placedIngredient.size);
+  const fontSize = calculateFontSize(placedIngredient.size);
+  
   const dynamicStyle: ViewStyle = {
     position: 'absolute',
     left: placedIngredient.position.x,
@@ -19,15 +28,56 @@ export function PlacedIngredientItem({
     height: placedIngredient.size.height
   };
 
+  const iconStyle: ViewStyle = {
+    backgroundColor: ingredient ? getColorCode(ingredient.color) : DEFAULT_COLOR,
+    width: iconSize,
+    height: iconSize,
+    borderRadius: iconSize / 2,
+    marginBottom: SIZING_CONFIG.ICON_MARGIN_BOTTOM,
+  };
+
+  const textStyle: TextStyle = {
+    fontSize,
+    fontWeight: '500',
+    textAlign: 'center',
+    color: '#333'
+  };
+
+  const Container = onPress ? TouchableOpacity : View;
+
+  if (!ingredient) {
+    return (
+      <Container
+        testID={`placed-ingredient-${placedIngredient.id}`}
+        style={[styles.placedIngredient, dynamicStyle]}
+        {...(onPress && { onPress: () => onPress(placedIngredient) })}
+      >
+        <View style={styles.ingredientContent} />
+      </Container>
+    );
+  }
+
   return (
-    <TouchableOpacity
+    <Container
       testID={`placed-ingredient-${placedIngredient.id}`}
       style={[styles.placedIngredient, dynamicStyle]}
-      onPress={() => onPress?.(placedIngredient)}
-      disabled={!onPress}
+      {...(onPress && { onPress: () => onPress(placedIngredient) })}
     >
-      <View style={styles.ingredientContent} />
-    </TouchableOpacity>
+      <View style={[styles.ingredientContent, { padding: SIZING_CONFIG.CONTENT_PADDING }]}>
+        <View 
+          testID={`ingredient-icon-${ingredient.id}`}
+          style={iconStyle} 
+        />
+        <Text 
+          testID={`ingredient-name-${ingredient.id}`}
+          style={textStyle}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+        >
+          {ingredient.name}
+        </Text>
+      </View>
+    </Container>
   );
 }
 
@@ -39,6 +89,8 @@ const styles = StyleSheet.create({
     borderColor: '#666'
   },
   ingredientContent: {
-    flex: 1
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
   }
 });

@@ -716,6 +716,238 @@ interface DropInfo { partitionId: string; position: DragPosition; }
 - **テスト容易性**: 各検証ロジックが純粋関数として分離
 - **型安全性**: TypeScriptによる実行時エラーの事前防止
 
+### 食材配置ロジックの実装洞察
+
+#### PlacedIngredientServiceの設計パターン
+```typescript
+// 責任分離による単一責任原則の実践
+class PlacedIngredientService {
+  // 作成: ID生成とオブジェクト構築
+  static createPlacedIngredient(input: CreatePlacedIngredientInput): PlacedIngredient
+
+  // 検証: 段階的バリデーション戦略
+  static canPlaceIngredient(...): PlacementResult
+  private static validateBounds(...): PlacementResult     // 境界チェック
+  private static validateCollisions(...): PlacementResult // 衝突検出
+
+  // 永続化: StorageServiceとの統合
+  static saveToStorage(ingredients: PlacedIngredient[]): Promise<void>
+  static loadFromStorage(): Promise<PlacedIngredient[]>
+
+  // 管理: 不変性を保った配列操作
+  static addPlacedIngredient(...): PlacedIngredient[]
+  static removePlacedIngredient(...): PlacedIngredient[]
+  static getByPartition(...): PlacedIngredient[]
+}
+```
+
+#### 共通ユーティリティの抽出
+```typescript
+// /src/utils/collision.ts - 衝突検出の共通化
+export function isOverlapping(pos1, size1, pos2, size2): boolean
+export function fitsWithinBounds(position, size, bounds): boolean
+
+// /src/constants/placement.ts - エラーメッセージの一元管理
+export const PLACEMENT_ERROR_MESSAGES = {
+  EXTENDS_BEYOND_BOUNDS: 'Ingredient extends beyond partition bounds',
+  OVERLAPS_WITH_EXISTING: 'Ingredient overlaps with existing ingredient',
+} as const;
+```
+
+#### ID生成戦略の統一
+```typescript
+// 一貫したID生成パターンの確立
+generatePlacedIngredientId(): `placed-${timestamp}-${randomString}`
+
+// 設定の外部化により保守性向上
+const ID_GENERATION = {
+  PLACED_INGREDIENT_PREFIX: 'placed',
+  RANDOM_STRING_LENGTH: 9,
+} as const;
+```
+
+#### 段階的バリデーション戦略
+```typescript
+// 責任を分離した検証ロジック
+static canPlaceIngredient(...): PlacementResult {
+  // 1段階目: 境界チェック（計算コスト低）
+  const boundsResult = this.validateBounds(ingredient, partition, position);
+  if (!boundsResult.canPlace) return boundsResult;
+
+  // 2段階目: 衝突検出（計算コスト高）
+  const collisionResult = this.validateCollisions(ingredient, partition, position, existing);
+  if (!collisionResult.canPlace) return collisionResult;
+
+  return { canPlace: true };
+}
+```
+
+#### 不変性を重視したデータ管理
+```typescript
+// 副作用のない純粋関数によるデータ操作
+static addPlacedIngredient(existing, newItem) {
+  return [...existing, newItem]; // 元配列を変更せず新配列を返す
+}
+
+static removePlacedIngredient(ingredients, id) {
+  return ingredients.filter(item => item.id !== id); // フィルタリングによる除去
+}
+```
+
+#### StorageServiceとの統合パターン
+```typescript
+// 既存のStorageServiceを活用した永続化
+static async saveToStorage(placedIngredients) {
+  await StorageService.saveBentoState(placedIngredients);
+}
+
+static async loadFromStorage() {
+  return await StorageService.loadBentoState();
+}
+```
+
+#### 型安全性の強化
+```typescript
+// 明確な型定義による開発効率とエラー防止
+interface PlacementResult {
+  canPlace: boolean;
+  reason?: string;
+}
+
+interface CreatePlacedIngredientInput {
+  ingredientId: string;
+  partitionId: string;
+  position: Position;
+  size: Size;
+}
+```
+
+#### テスト駆動開発の成果
+- **12個のテストケース** で包括的な機能検証
+- **ID生成の一意性**: 複数生成での重複なし確認
+- **境界検証**: パーティション境界内・外での正確な判定
+- **衝突検出**: 同一・異なるパーティション間での適切な処理
+- **永続化**: 保存・読み込み・空データ処理の確認
+- **管理機能**: 追加・削除・フィルタリングの動作検証
+
+#### リファクタリングによる改善点
+1. **コード重複の除去**: BentoBoxCanvasとの`isOverlapping`関数統合
+2. **定数の外部化**: エラーメッセージとID生成設定の管理改善
+3. **責任分離**: 大きなメソッドを小さな専用メソッドに分割
+4. **ユーティリティ化**: 汎用的な衝突検出機能の共通ライブラリ化
+
+#### パフォーマンスの考慮
+1. **段階的検証**: 軽い検証から重い検証の順で実行
+2. **O(n)の衝突検出**: 線形時間での既存食材との重複チェック
+3. **不変性**: 予測可能な状態管理によるデバッグ容易性
+4. **メモリ効率**: 必要最小限のデータコピーによる省メモリ実装
+
+#### 今後の拡張予定
+- **入れ替え機能**: 既存食材との位置交換ロジック
+- **自動配置**: 空きスペースを自動検出する配置アルゴリズム
+- **配置制約**: 食材種別によるパーティション制限
+- **undo/redo**: 配置操作の取り消し・やり直し機能
+
+### 食材アイコン・名前表示機能の実装洞察
+
+#### IngredientServiceの設計パターン
+```typescript
+// 食材データ検索の責任分離
+export class IngredientService {
+  static findById(id: string): Ingredient | null         // ID検索
+  static getAll(): Ingredient[]                          // 全件取得
+  static findByCategory(category): Ingredient[]          // カテゴリ検索
+  static findByColor(color): Ingredient[]                // 色検索
+}
+```
+
+#### PlacedIngredientItemの拡張設計
+```typescript
+// コンポーネント設計の改善ポイント
+PlacedIngredientItem {
+  // 依存性注入パターン: IngredientServiceを直接使用
+  ingredient = IngredientService.findById(placedIngredient.ingredientId)
+  
+  // 動的サイズ計算: コンテナサイズに応じたレスポンシブ対応
+  iconSize = calculateIconSize(placedIngredient.size)
+  fontSize = calculateFontSize(placedIngredient.size)
+  
+  // 条件付きコンテナ: プロップスに応じた適切なラッパー選択
+  Container = onPress ? TouchableOpacity : View
+}
+```
+
+#### カラーマッピングシステム
+```typescript
+// 色の体系的管理と拡張性
+export const COLOR_MAP = {
+  red: '#E53E3E',      // 食材の自然な色を意識した選択
+  yellow: '#F6E05E',   // UIでの視認性を重視
+  green: '#38A169',    // コントラストと美的バランス
+  white: '#F7FAFC',    // 背景との区別
+  brown: '#975A16',    // 調理済み食材の表現
+  black: '#2D3748'     // アクセント・区別用
+} as const;
+
+// フォールバック戦略
+getColorCode(color) => COLOR_MAP[color] ?? DEFAULT_COLOR
+```
+
+#### 動的サイズ計算システム
+```typescript
+// レスポンシブ対応の実装パターン
+const SIZING_CONFIG = {
+  ICON_SIZE_RATIO: 0.4,      // コンテナ高さの40%
+  FONT_SIZE_RATIO: 0.2,      // コンテナ高さの20%
+  MIN_ICON_SIZE: 8,          // 最小サイズ保証
+  MAX_ICON_SIZE: 24,         // 最大サイズ制限
+}
+
+// 計算ロジックの抽象化
+calculateIconSize(containerSize) {
+  const calculated = Math.min(width, height) * ICON_SIZE_RATIO
+  return clamp(calculated, MIN_ICON_SIZE, MAX_ICON_SIZE)
+}
+```
+
+#### TDD実装の成果
+- **13テストケース**: 包括的な機能検証
+- **完全な型安全性**: TypeScriptによる実行時エラー防止
+- **モック戦略**: IngredientServiceの適切な分離テスト
+- **リファクタリング耐性**: 内部実装変更に対するテストの安定性
+
+#### アーキテクチャ上の利点
+1. **単一責任原則**: IngredientService、色管理、サイズ計算の分離
+2. **依存性の逆転**: サービス層への依存により上位レイヤーでの制御が可能
+3. **開放閉鎖原則**: 新しい色やサイズルールの追加が既存コードに影響しない
+4. **コンポーネントの合成**: TouchableOpacity/View の動的選択
+
+#### パフォーマンス最適化
+```typescript
+// 計算結果のキャッシュ化（今後の拡張）
+const memoizedIconSize = useMemo(
+  () => calculateIconSize(placedIngredient.size),
+  [placedIngredient.size.width, placedIngredient.size.height]
+)
+
+// 条件付きレンダリングの最適化
+if (!ingredient) {
+  return <FallbackComponent />  // 早期リターンでレンダリング負荷軽減
+}
+```
+
+#### 今後の拡張予定
+- **アニメーション**: React Native Reanimated による配置アニメーション
+- **アイコンシステム**: SVGアイコンライブラリとの統合
+- **テーマシステム**: ダークモード・ライトモード対応
+- **アクセシビリティ**: スクリーンリーダー対応とアクセシビリティ向上
+
+#### 学習ポイント
+1. **段階的な機能拡張**: 基本機能→視覚的改善→パフォーマンス最適化
+2. **テストファーストアプローチ**: REDでの期待動作定義の重要性
+3. **ユーティリティ関数の価値**: 再利用可能な小さな関数の積み重ね
+4. **型安全性の実践的活用**: コンパイル時エラー検出による開発効率向上
+
 ## 今後の拡張ポイント
 1. 仕切りの自由配置
 2. お弁当箱形状の追加

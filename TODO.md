@@ -1,15 +1,11 @@
 # TODO リスト
 
 ## In Progress
-- [🔄 REFACTOR] 食材配置ロジックの実装 - リファクタリング中
-  - Started: 2025-01-26 19:10
-  - Goal: ドラッグ＆ドロップされた食材をPlacedIngredientとして管理・永続化する機能
-  - Red completed: 2025-01-26 19:15
-  - Green completed: 2025-01-26 19:20
+- [🔴 RED] パーティションタイプによる視覚的区別の追加 - 失敗テスト作成中
+  - Started: 2025-01-26 20:05
+  - Goal: riceパーティション（白系）とsideパーティション（明るいグレー系）の視覚的区別
 
 ## Next
-- [ ] 食材アイコン・名前表示機能の追加（PlacedIngredientItem）
-- [ ] パーティションタイプによる視覚的区別の追加
 - [ ] 提案アルゴリズム（速さ重視）の実装
 - [ ] 提案アルゴリズム（栄養バランス重視）の実装
 - [ ] 提案アルゴリズム（いろどり重視）の実装
@@ -39,3 +35,9 @@
 - [✅] ドラッグ＆ドロップ機能の実装 (2025-01-26 18:50)
   - Red/Green/Refactor/Feedback 全段階完了
   - 成果: 8/10テスト通過、主要機能完全動作、AABB衝突検出実装
+- [✅] 食材配置ロジックの実装 (2025-01-26 19:35)
+  - Red/Green/Refactor/Feedback 全段階完了
+  - 成果: PlacedIngredientService実装、衝突検出・永続化・管理機能完備
+- [✅] 食材アイコン・名前表示機能の追加（PlacedIngredientItem） (2025-01-26 20:00)
+  - Red/Green/Refactor/Feedback 全段階完了
+  - 成果: IngredientService実装、動的サイズ計算、カラーマッピングシステム、13テスト全合格
