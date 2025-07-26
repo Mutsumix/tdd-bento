@@ -450,6 +450,40 @@ IngredientsContext → 食材マスタデータ・ユーザー追加食材
 - 外部通信なし
 - ユーザーデータの暗号化は現時点では不要（機密情報なし）
 
+### BentoBoxCanvasコンポーネントの実装洞察
+
+#### サブコンポーネント設計
+```typescript
+// コンポーネントの責任分離
+BentoBoxCanvas       → コンテナとレイアウト管理
+├── PartitionArea    → 仕切りの表示
+└── PlacedIngredientItem → 配置済み食材の表示とインタラクション
+```
+
+#### スタイル管理パターン
+```typescript
+// 静的スタイルと動的スタイルの分離
+const dynamicStyle: ViewStyle = {
+  position: 'absolute',
+  left: bounds.x,
+  top: bounds.y,
+  width: bounds.width,
+  height: bounds.height
+};
+// StyleSheet.createで定義した静的スタイルと組み合わせ
+style={[styles.static, dynamicStyle]}
+```
+
+#### テストID命名規則
+- コンテナ: `bento-box-container`
+- パーティション: `partition-${partition.id}`
+- 配置済み食材: `placed-ingredient-${placedIngredient.id}`
+
+#### React Nativeテスト環境の注意点
+- jest.setup.jsでStyleSheet.flattenメソッドのモックが必要
+- toJSON()を使用したスナップショットテストが有効
+- react-test-rendererの非推奨警告は無視可能（現時点）
+
 ## 今後の拡張ポイント
 1. 仕切りの自由配置
 2. お弁当箱形状の追加
