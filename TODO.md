@@ -1,16 +1,12 @@
 # TODO リスト
 
 ## In Progress
-- [📝 FEEDBACK] BentoBoxCanvasコンポーネントの基本実装 - 設計フィードバック中
-  - Started: 2025-01-26 16:20
-  - Goal: お弁当箱の表示、パーティション表示、配置済み食材表示の基本機能
-  - Red completed: 2025-01-26 16:23
-  - Green completed: 2025-01-26 16:30
-  - Refactor completed: 2025-01-26 16:35
+- [🔴 RED] IngredientListコンポーネントの実装 - 失敗テスト作成中
+  - Started: 2025-01-26 16:40
+  - Goal: 横スクロール食材リスト、IngredientItem表示、カテゴリフィルタリング機能
 
 ## Next
 - [ ] AsyncStorageのセットアップと基本的な永続化
-- [ ] IngredientListコンポーネントの実装
 - [ ] ドラッグ＆ドロップ機能の実装
 - [ ] 食材配置ロジックの実装
 - [ ] 食材アイコン・名前表示機能の追加（PlacedIngredientItem）
@@ -34,4 +30,6 @@
 - [✅] 初期食材データ（20種類）の作成 (2025-01-26 15:42)
   - Red/Green/Refactor/Feedback 全段階完了
 - [✅] 基本的なプロジェクト構造の作成 (2025-01-26 16:15)
+  - Red/Green/Refactor/Feedback 全段階完了
+- [✅] BentoBoxCanvasコンポーネントの基本実装 (2025-01-26 16:37)
   - Red/Green/Refactor/Feedback 全段階完了
