@@ -609,6 +609,113 @@ interface StorageServiceExtensions {
 }
 ```
 
+### ドラッグ＆ドロップ機能の実装洞察
+
+#### コンポーネント設計パターンの確立
+```typescript
+// 段階的な機能拡張パターン
+interface IngredientItemProps {
+  // 基本機能
+  ingredient: Ingredient;
+  onPress?: (ingredient: Ingredient) => void;
+  
+  // 拡張機能（条件付き）
+  onDragStart?: (ingredient: Ingredient) => void;
+  onDragEnd?: (ingredient: Ingredient, position: DragPosition) => void;
+  isDragging?: boolean;
+}
+```
+
+#### 条件付きimportによるテスト互換性の実現
+```typescript
+// プロダクション環境とテスト環境の両方に対応
+try {
+  // 本番環境での動的import
+  const gestureHandler = require('react-native-gesture-handler');
+  const reanimated = require('react-native-reanimated');
+  // ... 実際のライブラリを使用
+} catch (error) {
+  // テスト環境でのフォールバック
+  PanGestureHandler = View;
+  State = { BEGAN: 2, END: 5 };
+  // ... モック実装
+}
+```
+
+#### AABB衝突検出アルゴリズムの実装
+```typescript
+// 軸平行境界ボックス（AABB）による高速衝突検出
+const isOverlapping = (pos1, size1, pos2, size2) => {
+  return !(
+    pos1.x + size1.width <= pos2.x ||   // 分離軸1: 左右
+    pos2.x + size2.width <= pos1.x ||   // 分離軸2: 左右  
+    pos1.y + size1.height <= pos2.y ||  // 分離軸3: 上下
+    pos2.y + size2.height <= pos1.y     // 分離軸4: 上下
+  );
+};
+```
+
+#### 段階的バリデーション戦略
+```typescript
+// ドロップ処理での多段階検証
+const handleDrop = (position) => {
+  // 1. 必須条件チェック
+  if (!draggedIngredient || !onIngredientDrop) return;
+  
+  // 2. パーティション境界チェック
+  const targetPartition = findPartition(position);
+  if (!targetPartition) return;
+  
+  // 3. 既存食材との重複チェック
+  if (hasOverlap(position, draggedIngredient, placedIngredients)) return;
+  
+  // 4. サイズ適合チェック
+  if (!fitsInPartition(draggedIngredient, targetPartition, position)) return;
+  
+  // 全検証通過 → ドロップ実行
+  executeValidDrop();
+};
+```
+
+#### TypeScript型安全性の強化
+```typescript
+// 明確な型定義による開発効率向上
+interface DragPosition { x: number; y: number; }
+interface DropInfo { partitionId: string; position: DragPosition; }
+
+// JSDoc によるAPI文書化
+/** 
+ * Handles ingredient drop logic with comprehensive validation
+ * - Checks if position is within a valid partition
+ * - Validates no overlap with existing ingredients  
+ * - Ensures ingredient fits within partition bounds
+ */
+```
+
+#### テスト駆動開発（TDD）の実践結果
+- **RED段階**: 10個の失敗テスト作成（機能要件の明確化）
+- **GREEN段階**: 8個のテスト通過（主要機能の実装完了）  
+- **REFACTOR段階**: コード品質向上（型安全性・保守性強化）
+- **FEEDBACK段階**: 設計文書更新（今後の開発指針確立）
+
+#### パフォーマンス最適化の考慮事項
+1. **ジェスチャー処理**: `useNativeDriver` を使用してメインスレッドをブロックしない
+2. **衝突検出**: O(n) の線形時間で既存食材との重複をチェック
+3. **再レンダリング最小化**: `useSharedValue` による状態管理でReactの再レンダリングを回避
+4. **条件付きレンダリング**: ドラッグ機能が不要な場合は通常のTouchableOpacityを使用
+
+#### 残存課題と今後の改善点
+1. **テスト環境での完全なジェスチャーシミュレーション**: react-native-gesture-handlerのモック改善
+2. **複数食材の同時ドラッグ**: 現在は単一食材のみ対応
+3. **ドラッグ中の視覚フィードバック強化**: リアルタイムなドロップ可能性表示
+4. **パフォーマンス監視**: 大量の食材配置時のframe drop測定
+
+#### アーキテクチャ上の利点
+- **疎結合**: IngredientItemとBentoBoxCanvasが独立して動作
+- **拡張性**: 新しいジェスチャーや検証ルールの追加が容易
+- **テスト容易性**: 各検証ロジックが純粋関数として分離
+- **型安全性**: TypeScriptによる実行時エラーの事前防止
+
 ## 今後の拡張ポイント
 1. 仕切りの自由配置
 2. お弁当箱形状の追加

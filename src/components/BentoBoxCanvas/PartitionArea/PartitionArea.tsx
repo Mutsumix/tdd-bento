@@ -4,9 +4,10 @@ import { Partition } from '@/types';
 
 export interface PartitionAreaProps {
   partition: Partition;
+  onDrop?: (position: { x: number; y: number }) => void;
 }
 
-export function PartitionArea({ partition }: PartitionAreaProps) {
+export function PartitionArea({ partition, onDrop }: PartitionAreaProps) {
   const dynamicStyle: ViewStyle = {
     position: 'absolute',
     left: partition.bounds.x,
@@ -15,10 +16,21 @@ export function PartitionArea({ partition }: PartitionAreaProps) {
     height: partition.bounds.height
   };
 
+  const handleDrop = (event: any) => {
+    if (onDrop && event.nativeEvent) {
+      const position = {
+        x: event.nativeEvent.position?.x || 0,
+        y: event.nativeEvent.position?.y || 0
+      };
+      onDrop(position);
+    }
+  };
+
   return (
     <View
       testID={`partition-${partition.id}`}
       style={[styles.partition, dynamicStyle]}
+      onTouchEnd={handleDrop}
     />
   );
 }
