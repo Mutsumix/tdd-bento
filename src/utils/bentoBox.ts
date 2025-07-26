@@ -15,16 +15,8 @@ const VALID_BENTO_TYPES: readonly BentoBox['type'][] = ['rectangle', 'oval', 'do
 const VALID_PARTITION_TYPES: readonly Partition['type'][] = ['rice', 'side'];
 
 // Helper functions
-function generateBentoBoxId(): string {
-  return `bento-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-}
-
-function generatePartitionId(): string {
-  return `partition-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-}
-
-function generatePlacedIngredientId(): string {
-  return `placed-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+function generateId(prefix: string): string {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
 
 function createDefaultPartitions(dimensions: { width: number; height: number }): Partition[] {
@@ -32,53 +24,76 @@ function createDefaultPartitions(dimensions: { width: number; height: number }):
   
   return [
     {
-      id: generatePartitionId(),
+      id: generateId('partition'),
       type: 'rice',
       bounds: { x: 0, y: 0, width: halfWidth, height: dimensions.height }
     },
     {
-      id: generatePartitionId(),
+      id: generateId('partition'),
       type: 'side',
       bounds: { x: halfWidth, y: 0, width: halfWidth, height: dimensions.height }
     }
   ];
 }
 
-function validateDimensions(dimensions: any): string[] {
+function validateNumericField(
+  obj: any, 
+  fieldName: string, 
+  parentName: string,
+  mustBePositive: boolean = false
+): string[] {
   const errors: string[] = [];
+  const value = obj[fieldName];
   
-  if (!dimensions || typeof dimensions !== 'object') {
-    errors.push('dimensions is required');
+  if (typeof value !== 'number') {
+    errors.push(`${parentName}.${fieldName} must be a number`);
     return errors;
   }
   
-  if (typeof dimensions.width !== 'number' || dimensions.width <= 0) {
-    errors.push('dimensions.width must be positive');
-  }
+  const minValue = mustBePositive ? 0 : 0;
+  const condition = mustBePositive ? value <= minValue : value < minValue;
+  const requirement = mustBePositive ? 'positive' : 'non-negative';
   
-  if (typeof dimensions.height !== 'number' || dimensions.height <= 0) {
-    errors.push('dimensions.height must be positive');
+  if (condition) {
+    errors.push(`${parentName}.${fieldName} must be ${requirement}`);
   }
   
   return errors;
 }
 
-function validateBounds(bounds: any): string[] {
+function validateObjectWithNumericFields(
+  obj: any,
+  objName: string,
+  fields: Array<{ name: string; mustBePositive?: boolean }>
+): string[] {
   const errors: string[] = [];
   
-  if (!bounds || typeof bounds !== 'object') {
-    errors.push('bounds is required');
+  if (!obj || typeof obj !== 'object') {
+    errors.push(`${objName} is required`);
     return errors;
   }
   
-  const requiredFields = ['x', 'y', 'width', 'height'];
-  requiredFields.forEach(field => {
-    if (typeof bounds[field] !== 'number' || bounds[field] < 0) {
-      errors.push(`bounds.${field} must be a non-negative number`);
-    }
+  fields.forEach(field => {
+    errors.push(...validateNumericField(obj, field.name, objName, field.mustBePositive));
   });
   
   return errors;
+}
+
+function validateDimensions(dimensions: any): string[] {
+  return validateObjectWithNumericFields(dimensions, 'dimensions', [
+    { name: 'width', mustBePositive: true },
+    { name: 'height', mustBePositive: true }
+  ]);
+}
+
+function validateBounds(bounds: any): string[] {
+  return validateObjectWithNumericFields(bounds, 'bounds', [
+    { name: 'x', mustBePositive: false },
+    { name: 'y', mustBePositive: false },
+    { name: 'width', mustBePositive: true },
+    { name: 'height', mustBePositive: true }
+  ]);
 }
 
 function isOverlapping(
@@ -100,7 +115,7 @@ export function createBentoBox(input: CreateBentoBoxInput): BentoBox {
   const partitions = input.partitions || createDefaultPartitions(input.dimensions);
   
   return {
-    id: generateBentoBoxId(),
+    id: generateId('bento'),
     type: input.type,
     dimensions: input.dimensions,
     partitions
@@ -131,7 +146,7 @@ export function validateBentoBox(bentoBox: any): ValidationResult {
 
 export function createPartition(input: CreatePartitionInput): Partition {
   return {
-    id: generatePartitionId(),
+    id: generateId('partition'),
     type: input.type,
     bounds: input.bounds
   };
@@ -160,7 +175,7 @@ export function validatePartition(partition: any): ValidationResult {
 
 export function createPlacedIngredient(input: CreatePlacedIngredientInput): PlacedIngredient {
   return {
-    id: generatePlacedIngredientId(),
+    id: generateId('placed'),
     ingredientId: input.ingredientId,
     position: input.position,
     size: input.size,
