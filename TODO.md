@@ -1,9 +1,10 @@
 # TODO リスト
 
 ## In Progress
-- [🔴 RED] お弁当箱データモデルの実装とテスト - 失敗テスト作成中
+- [🟢 GREEN] お弁当箱データモデルの実装とテスト - 実装中
   - Started: 2025-01-26 15:03
   - Goal: BentoBox、Partition、PlacedIngredientインターフェースと関連機能を実装
+  - Red completed: 2025-01-26 15:07
 
 ## Next
 - [ ] 基本的なプロジェクト構造の作成

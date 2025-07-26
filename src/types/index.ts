@@ -27,3 +27,53 @@ export type CreateIngredientInput = Partial<Ingredient> & {
   category: Ingredient['category'];
   color: Ingredient['color'];
 };
+
+export interface BentoBox {
+  id: string;
+  type: 'rectangle' | 'oval' | 'double';
+  dimensions: { width: number; height: number };
+  partitions: Partition[];
+}
+
+export interface Partition {
+  id: string;
+  type: 'rice' | 'side';
+  bounds: { x: number; y: number; width: number; height: number };
+}
+
+export interface PlacedIngredient {
+  id: string;
+  ingredientId: string;
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+  partitionId: string;
+}
+
+export type CreateBentoBoxInput = {
+  type: BentoBox['type'];
+  dimensions: BentoBox['dimensions'];
+  partitions?: Partition[];
+};
+
+export type CreatePartitionInput = {
+  type: Partition['type'];
+  bounds: Partition['bounds'];
+};
+
+export type CreatePlacedIngredientInput = {
+  ingredientId: string;
+  partitionId: string;
+  position: PlacedIngredient['position'];
+  size: PlacedIngredient['size'];
+};
+
+export interface PlacementResult {
+  canPlace: boolean;
+  reason?: string;
+}
+
+export interface PlacementOperationResult {
+  success: boolean;
+  placedIngredient?: PlacedIngredient;
+  error?: string;
+}
