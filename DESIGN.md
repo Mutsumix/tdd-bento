@@ -263,6 +263,64 @@ DEFAULT_SEASON = 'all' // 通年利用可能
 - `validateEnumFields()`: カテゴリ・色の有効値チェック
 - nullish coalescing operator (??) で falsy 値の正確な処理
 
+### お弁当箱データモデルの実装洞察
+
+#### ID生成戦略の統一
+```typescript
+// 統一されたID生成パターン
+generateId(prefix: string): `${prefix}-${timestamp}-${random}`
+// 例:
+// bento-1706247598123-abc123def
+// partition-1706247598124-def456ghi
+// placed-1706247598125-ghi789jkl
+```
+
+#### デフォルト仕切り設計（2分割）
+```typescript
+// 長方形お弁当箱の2分割パターン
+createDefaultPartitions(dimensions) {
+  halfWidth = width / 2
+  return [
+    { type: 'rice', bounds: { x: 0, y: 0, width: halfWidth, height } },      // 左半分：ご飯
+    { type: 'side', bounds: { x: halfWidth, y: 0, width: halfWidth, height } } // 右半分：おかず
+  ]
+}
+```
+
+#### 食材配置の衝突検出アルゴリズム
+```typescript
+// 矩形重複判定（AABB collision detection）
+isOverlapping(pos1, size1, pos2, size2) {
+  // 4つの分離軸をチェック
+  return !(
+    pos1.x + size1.width <= pos2.x ||   // 1が2の左
+    pos2.x + size2.width <= pos1.x ||   // 2が1の左  
+    pos1.y + size1.height <= pos2.y ||  // 1が2の上
+    pos2.y + size2.height <= pos1.y     // 2が1の上
+  )
+}
+```
+
+#### バリデーション戦略の改善
+- **共通化**: `validateObjectWithNumericFields()` で数値フィールドの検証を統一
+- **再利用性**: `validateNumericField()` で positive/non-negative の条件を柔軟に指定
+- **階層化**: dimensions → bounds → position/size の段階的バリデーション
+
+#### 配置制約の実装
+1. **境界チェック**: 食材がパーティション境界内に収まるか
+2. **重複チェック**: 既存食材との衝突がないか
+3. **パーティション一致**: 指定されたパーティションが存在するか
+
+```typescript
+canPlaceIngredientInPartition(ingredient, partition, existing) {
+  // 1. 境界チェック
+  if (ingredient exceeds partition.bounds) return false
+  // 2. 重複チェック  
+  if (overlaps with any existing in same partition) return false
+  return true
+}
+```
+
 ## セキュリティ・プライバシー
 - ローカルデータのみ使用
 - 外部通信なし
