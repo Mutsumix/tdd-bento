@@ -217,6 +217,7 @@ interface IngredientsState {
 1. **単体テスト**:
    - 提案アルゴリズムのロジック
    - スコア計算の正確性
+   - TypeScript設定：ts-jest使用（jest-expoは依存関係問題あり）
 
 2. **統合テスト**:
    - ドラッグ＆ドロップの動作
@@ -225,6 +226,14 @@ interface IngredientsState {
 3. **E2Eテスト**:
    - 基本的な使用フロー
    - エッジケース（空のお弁当、満杯のお弁当）
+
+## 実装メモ
+
+### 開発環境セットアップ
+- Expo Go対応
+- TypeScriptフル活用（strict: true）
+- パス解決設定：@/* → src/*
+- テスト環境：ts-jest（jest-expoは回避）
 
 ## セキュリティ・プライバシー
 - ローカルデータのみ使用

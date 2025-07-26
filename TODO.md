@@ -1,11 +1,12 @@
 # TODO リスト
 
 ## In Progress
-- [🔄 REFACTOR] Expo プロジェクトの初期セットアップ - リファクタリング中
+- [📝 FEEDBACK] Expo プロジェクトの初期セットアップ - 設計フィードバック中
   - Started: 2025-01-26 14:35
   - Goal: Expoプロジェクトを作成し、TypeScriptで動作確認
   - Red completed: 2025-01-26 14:38
   - Green completed: 2025-01-26 14:44
+  - Refactor completed: 2025-01-26 14:46
 
 ## Next
 - [ ] Expo プロジェクトの初期セットアップ
