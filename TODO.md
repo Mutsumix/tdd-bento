@@ -1,9 +1,11 @@
 # TODO リスト
 
 ## In Progress
+- [🔴 RED] AsyncStorageのセットアップと基本的な永続化 - 失敗テスト作成中
+  - Started: 2025-01-26 17:35
+  - Goal: AsyncStorageでのユーザー追加食材とお弁当状態の永続化機能
 
 ## Next
-- [ ] AsyncStorageのセットアップと基本的な永続化
 - [ ] ドラッグ＆ドロップ機能の実装
 - [ ] 食材配置ロジックの実装
 - [ ] 食材アイコン・名前表示機能の追加（PlacedIngredientItem）
