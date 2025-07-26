@@ -1,10 +1,11 @@
 # TODO リスト
 
 ## In Progress
-- [🟢 GREEN] 食材配置ロジックの実装 - 実装中
+- [🔄 REFACTOR] 食材配置ロジックの実装 - リファクタリング中
   - Started: 2025-01-26 19:10
   - Goal: ドラッグ＆ドロップされた食材をPlacedIngredientとして管理・永続化する機能
   - Red completed: 2025-01-26 19:15
+  - Green completed: 2025-01-26 19:20
 
 ## Next
 - [ ] 食材アイコン・名前表示機能の追加（PlacedIngredientItem）

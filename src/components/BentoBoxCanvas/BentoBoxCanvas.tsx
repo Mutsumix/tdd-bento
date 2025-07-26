@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { BentoBox, PlacedIngredient, Ingredient } from '@/types';
+import { isOverlapping } from '@/utils/collision';
 import { PartitionArea } from './PartitionArea';
 import { PlacedIngredientItem } from './PlacedIngredientItem';
 
@@ -44,23 +45,6 @@ const isPositionInPartition = (
   );
 };
 
-/**
- * Checks if two rectangles overlap using AABB (Axis-Aligned Bounding Box) collision detection
- * Returns true if rectangles overlap, false if they're completely separated
- */
-const isOverlapping = (
-  pos1: { x: number; y: number },
-  size1: { width: number; height: number },
-  pos2: { x: number; y: number },
-  size2: { width: number; height: number }
-): boolean => {
-  return !(
-    pos1.x + size1.width <= pos2.x ||   // rect1 is to the left of rect2
-    pos2.x + size2.width <= pos1.x ||   // rect2 is to the left of rect1  
-    pos1.y + size1.height <= pos2.y ||  // rect1 is above rect2
-    pos2.y + size2.height <= pos1.y     // rect2 is above rect1
-  );
-};
 
 /**
  * BentoBoxCanvas - The main canvas for displaying and interacting with a bento box

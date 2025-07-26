@@ -1,4 +1,6 @@
 import { StorageService } from './storageService';
+import { isOverlapping, fitsWithinBounds, Position, Size } from '@/utils/collision';
+import { PLACEMENT_ERROR_MESSAGES, ID_GENERATION } from '@/constants/placement';
 import { 
   PlacedIngredient, 
   CreatePlacedIngredientInput, 
@@ -34,8 +36,8 @@ export class PlacedIngredientService {
    */
   private static generatePlacedIngredientId(): string {
     const timestamp = Date.now();
-    const randomString = Math.random().toString(36).substr(2, 9);
-    return `placed-${timestamp}-${randomString}`;
+    const randomString = Math.random().toString(36).substr(2, ID_GENERATION.RANDOM_STRING_LENGTH);
+    return `${ID_GENERATION.PLACED_INGREDIENT_PREFIX}-${timestamp}-${randomString}`;
   }
 
   /**
@@ -45,54 +47,69 @@ export class PlacedIngredientService {
   static canPlaceIngredient(
     ingredient: Ingredient,
     partition: Partition,
-    position: { x: number; y: number },
+    position: Position,
     existingIngredients: PlacedIngredient[]
   ): PlacementResult {
-    // Check if ingredient fits within partition bounds
-    const ingredientRight = position.x + ingredient.defaultSize.width;
-    const ingredientBottom = position.y + ingredient.defaultSize.height;
-    const partitionRight = partition.bounds.x + partition.bounds.width;
-    const partitionBottom = partition.bounds.y + partition.bounds.height;
-
-    if (ingredientRight > partitionRight || ingredientBottom > partitionBottom) {
-      return {
-        canPlace: false,
-        reason: 'Ingredient extends beyond partition bounds'
-      };
+    // Check bounds validation first
+    const boundsValidation = this.validateBounds(ingredient, partition, position);
+    if (!boundsValidation.canPlace) {
+      return boundsValidation;
     }
 
-    // Check for overlaps with existing ingredients in the same partition
-    const ingredientsInPartition = existingIngredients.filter(
-      placed => placed.partitionId === partition.id
-    );
-
-    for (const existing of ingredientsInPartition) {
-      if (this.isOverlapping(position, ingredient.defaultSize, existing.position, existing.size)) {
-        return {
-          canPlace: false,
-          reason: 'Ingredient overlaps with existing ingredient'
-        };
-      }
+    // Check collision validation
+    const collisionValidation = this.validateCollisions(ingredient, partition, position, existingIngredients);
+    if (!collisionValidation.canPlace) {
+      return collisionValidation;
     }
 
     return { canPlace: true };
   }
 
   /**
-   * Checks if two rectangles overlap using AABB collision detection
+   * Validates if ingredient fits within partition bounds
    */
-  private static isOverlapping(
-    pos1: { x: number; y: number },
-    size1: { width: number; height: number },
-    pos2: { x: number; y: number },
-    size2: { width: number; height: number }
-  ): boolean {
-    return !(
-      pos1.x + size1.width <= pos2.x ||   // rect1 is to the left of rect2
-      pos2.x + size2.width <= pos1.x ||   // rect2 is to the left of rect1  
-      pos1.y + size1.height <= pos2.y ||  // rect1 is above rect2
-      pos2.y + size2.height <= pos1.y     // rect2 is above rect1
+  private static validateBounds(
+    ingredient: Ingredient,
+    partition: Partition,
+    position: Position
+  ): PlacementResult {
+    const fits = fitsWithinBounds(
+      position,
+      ingredient.defaultSize,
+      partition.bounds
     );
+
+    if (!fits) {
+      return {
+        canPlace: false,
+        reason: PLACEMENT_ERROR_MESSAGES.EXTENDS_BEYOND_BOUNDS
+      };
+    }
+
+    return { canPlace: true };
+  }
+
+  /**
+   * Validates if ingredient overlaps with existing ingredients in the same partition
+   */
+  private static validateCollisions(
+    ingredient: Ingredient,
+    partition: Partition,
+    position: Position,
+    existingIngredients: PlacedIngredient[]
+  ): PlacementResult {
+    const ingredientsInPartition = this.getByPartition(existingIngredients, partition.id);
+
+    for (const existing of ingredientsInPartition) {
+      if (isOverlapping(position, ingredient.defaultSize, existing.position, existing.size)) {
+        return {
+          canPlace: false,
+          reason: PLACEMENT_ERROR_MESSAGES.OVERLAPS_WITH_EXISTING
+        };
+      }
+    }
+
+    return { canPlace: true };
   }
 
   /**
