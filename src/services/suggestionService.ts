@@ -2,7 +2,9 @@ import { Ingredient } from '@/types';
 import { getColorNameJP } from '@/utils/colors';
 
 // Suggestion algorithm types
-export type SuggestionType = 'speed' | 'nutrition' | 'color';
+export type SuggestionType = 'speed' | 'nutrition' | 'color' | 'season';
+
+export type Season = 'spring' | 'summer' | 'autumn' | 'winter';
 
 export interface SuggestionResult {
   ingredient: Ingredient;
@@ -27,6 +29,10 @@ const SUGGESTION_CONFIG = {
   COLOR: {
     VARIETY_BONUS: 20,         // Bonus points per unique color
     DUPLICATE_PENALTY: 10      // Penalty points per duplicate color
+  },
+  SEASON: {
+    MATCHING_BONUS: 50,        // Bonus points for matching current season
+    ALL_SEASON_BONUS: 25       // Bonus points for all-season ingredients
   }
 } as const;
 
@@ -161,17 +167,19 @@ export class SuggestionService {
   /**
    * Get ingredient suggestions with their scores and reasons
    */
-  static getSuggestionsWithScores(ingredients: Ingredient[], type: SuggestionType): SuggestionResult[] {
+  static getSuggestionsWithScores(ingredients: Ingredient[], type: SuggestionType, currentSeason?: Season): SuggestionResult[] {
     const scoreCalculators = {
       speed: (ingredient: Ingredient) => this.calculateSpeedScore(ingredient),
       nutrition: (ingredient: Ingredient) => this.calculateNutritionScore([ingredient]),
-      color: (ingredient: Ingredient) => this.calculateColorScore([ingredient])
+      color: (ingredient: Ingredient) => this.calculateColorScore([ingredient]),
+      season: (ingredient: Ingredient) => this.calculateSeasonScore(ingredient, currentSeason)
     };
 
     const reasonGenerators = {
       speed: (ingredient: Ingredient) => this.getSpeedReason(ingredient),
       nutrition: (ingredient: Ingredient) => this.getNutritionReason(ingredient),
-      color: (ingredient: Ingredient) => this.getColorReason(ingredient)
+      color: (ingredient: Ingredient) => this.getColorReason(ingredient),
+      season: (ingredient: Ingredient) => this.getSeasonReason(ingredient)
     };
 
     const scoreCalculator = scoreCalculators[type];
@@ -234,5 +242,86 @@ export class SuggestionService {
   private static getColorReason(ingredient: Ingredient): string {
     const colorName = getColorNameJP(ingredient.color);
     return `${colorName}色で彩り豊か`;
+  }
+
+  /**
+   * Get the current season based on date (Japan seasons)
+   */
+  static getCurrentSeason(date?: Date): Season {
+    const currentDate = date || new Date();
+    const month = currentDate.getMonth() + 1; // getMonth() returns 0-11
+    
+    if (month >= 3 && month <= 5) {
+      return 'spring';
+    } else if (month >= 6 && month <= 8) {
+      return 'summer';
+    } else if (month >= 9 && month <= 11) {
+      return 'autumn';
+    } else {
+      return 'winter';
+    }
+  }
+
+  /**
+   * Calculate season-focused score for an ingredient
+   * Formula: score = (ingredient.season === currentSeason ? 50 : 0) + (ingredient.season === 'all' ? 25 : 0)
+   */
+  static calculateSeasonScore(ingredient: Ingredient, currentSeason?: Season): number {
+    const season = currentSeason || this.getCurrentSeason();
+    
+    if (ingredient.season === season) {
+      return SUGGESTION_CONFIG.SEASON.MATCHING_BONUS;
+    } else if (ingredient.season === 'all') {
+      return SUGGESTION_CONFIG.SEASON.ALL_SEASON_BONUS;
+    } else {
+      return 0;
+    }
+  }
+
+  /**
+   * Get ingredient suggestions sorted by season score (highest first)
+   */
+  static getSuggestionsForSeason(ingredients: Ingredient[], currentSeason?: Season, count?: number): Ingredient[] {
+    if (ingredients.length === 0) {
+      return [];
+    }
+
+    const sorted = [...ingredients].sort((a, b) => {
+      const scoreA = this.calculateSeasonScore(a, currentSeason);
+      const scoreB = this.calculateSeasonScore(b, currentSeason);
+      return scoreB - scoreA; // Descending order (highest score first)
+    });
+
+    return count ? sorted.slice(0, count) : sorted;
+  }
+
+  /**
+   * Generate reason text for season score
+   */
+  private static getSeasonReason(ingredient: Ingredient): string {
+    const currentSeason = this.getCurrentSeason();
+    
+    if (ingredient.season === currentSeason) {
+      return `今の季節（${this.getSeasonNameJP(currentSeason)}）に最適`;
+    } else if (ingredient.season === 'all') {
+      return '通年利用可能';
+    } else if (ingredient.season) {
+      return `${this.getSeasonNameJP(ingredient.season)}の食材`;
+    } else {
+      return '季節指定なし';
+    }
+  }
+
+  /**
+   * Get Japanese season name
+   */
+  private static getSeasonNameJP(season: Season): string {
+    const seasonNames = {
+      spring: '春',
+      summer: '夏', 
+      autumn: '秋',
+      winter: '冬'
+    };
+    return seasonNames[season];
   }
 }
