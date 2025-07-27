@@ -35,7 +35,13 @@ const SUGGESTION_CONFIG = {
     ALL_SEASON_BONUS: 25       // Bonus points for all-season ingredients
   },
   COST: {
-    BASE_VALUE: 1000           // Base value for cost calculation (1000 - cost = score)
+    BASE_VALUE: 1000,          // Base value for cost calculation (1000 - cost = score)
+    THRESHOLDS: {
+      VERY_CHEAP: 50,          // とても安価でお得
+      CHEAP: 100,              // 安価でコスパ良好
+      STANDARD: 200,           // 標準的な価格
+      EXPENSIVE: 400           // やや高価 (above this = 高価な食材)
+    }
   }
 } as const;
 
@@ -360,14 +366,15 @@ export class SuggestionService {
    */
   private static getCostReason(ingredient: Ingredient): string {
     const cost = ingredient.cost;
+    const thresholds = SUGGESTION_CONFIG.COST.THRESHOLDS;
     
-    if (cost <= 50) {
+    if (cost <= thresholds.VERY_CHEAP) {
       return 'とても安価でお得';
-    } else if (cost <= 100) {
+    } else if (cost <= thresholds.CHEAP) {
       return '安価でコスパ良好';
-    } else if (cost <= 200) {
+    } else if (cost <= thresholds.STANDARD) {
       return '標準的な価格';
-    } else if (cost <= 400) {
+    } else if (cost <= thresholds.EXPENSIVE) {
       return 'やや高価';
     } else {
       return '高価な食材';

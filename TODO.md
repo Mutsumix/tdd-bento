@@ -1,10 +1,11 @@
 # TODO リスト
 
 ## In Progress
-- [🟢 GREEN] 提案アルゴリズム（コスト重視）の実装 - 実装中
+- [🔄 REFACTOR] 提案アルゴリズム（コスト重視）の実装 - リファクタリング中
   - Started: 2025-01-27 14:50
   - Goal: 総コストが低いほど高スコアとなるコスト重視アルゴリズム（score = 1000 - totalCost）
   - Red completed: 2025-01-27 15:00
+  - Green completed: 2025-01-27 15:05
 
 ## Next
 - [ ] SuggestionModalの実装
