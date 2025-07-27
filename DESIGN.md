@@ -1416,6 +1416,147 @@ else if (cost <= thresholds.CHEAP) return '安価でコスパ良好';
 3. **負値の許容**: 制約を緩めることで現実的な対応力向上
 4. **段階的UX**: 価格帯による直感的なフィードバック提供
 
+### SuggestionModalの実装洞察
+
+#### 統合的UI色管理システムの構築
+```typescript
+// colors.tsへのUI色定数追加による統一的な色管理
+export const UI_COLORS = {
+  primary: '#007AFF',       // iOS blue for primary actions
+  success: '#34C759',       // iOS green for success actions  
+  destructive: '#FF3B30',   // iOS red for destructive actions
+  background: {
+    overlay: 'rgba(0, 0, 0, 0.5)',
+    modal: 'white',
+    section: '#f8f9fa'
+  },
+  text: {
+    primary: '#333',
+    secondary: '#666', 
+    muted: '#999'
+  },
+  border: {
+    light: '#ddd',
+    medium: '#d0d0d0',
+    dark: '#e0e0e0'
+  }
+} as const;
+```
+
+#### 定数の外部化による保守性向上
+```typescript
+// criteria配列の外部化
+// src/constants/suggestionCriteria.ts
+export const SUGGESTION_CRITERIA: Array<{ type: SuggestionType; label: string }> = [
+  { type: 'speed', label: '速さ重視' },
+  { type: 'nutrition', label: '栄養バランス' },
+  { type: 'color', label: 'いろどり' },
+  { type: 'season', label: '季節感' },
+  { type: 'cost', label: 'コスト重視' }
+] as const;
+
+// コンポーネント内での使用
+{SUGGESTION_CRITERIA.map((criterion) => (
+  <TouchableOpacity key={criterion.type} ...>
+    {criterion.label}
+  </TouchableOpacity>
+))}
+```
+
+#### スタイル重複の統一化
+```typescript
+// Before: 個別のボタンテキストスタイル（重複）
+adoptButtonText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
+nextButtonText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
+cancelButtonText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
+
+// After: 統一されたボタンテキストスタイル
+buttonText: {
+  color: UI_COLORS.background.modal,
+  fontWeight: 'bold',
+  fontSize: 16,
+},
+
+// 使用時
+<Text style={styles.buttonText}>採用</Text>
+<Text style={styles.buttonText}>次の提案</Text>
+<Text style={styles.buttonText}>キャンセル</Text>
+```
+
+#### TDD実装の成果
+- **15個の包括的テストケース**: レンダリング、基準選択、提案表示、アクション全機能を検証
+- **Modal互換性対応**: react-native-modalとテスト環境の互換性問題をView置換で解決
+- **アクセシビリティ配慮**: testID設定とaccessibilityState による支援技術対応
+- **完全な型安全性**: SuggestionModalPropsとSuggestionTypeによる実行時エラー防止
+
+#### リファクタリングによる品質向上
+1. **色の統一化**: `#007AFF`などのハードコーディングをUI_COLORS.primaryに統一
+2. **定数の外部化**: criteria配列をconstantsディレクトリに移動
+3. **スタイル最適化**: 重複したボタンテキストスタイルを単一のbuttonTextに統合
+4. **import整理**: 関連する定数とユーティリティの適切なインポート
+
+#### コンポーネント設計パターン
+```typescript
+// 責任分離による明確な構造
+SuggestionModal
+├── criteria selection    // 評価軸選択UI
+├── suggestion display    // 提案結果表示
+└── action buttons       // 採用・次・キャンセル操作
+
+// 状態管理の最適化
+const [selectedCriteria, setSelectedCriteria] = useState<SuggestionType>('speed');
+const [suggestions, setSuggestions] = useState<SuggestionResult[]>([]);
+const [currentIndex, setCurrentIndex] = useState(0);
+
+// useEffectによる自動更新
+useEffect(() => {
+  if (ingredients.length > 0) {
+    const newSuggestions = SuggestionService.getSuggestionsWithScores(ingredients, selectedCriteria);
+    setSuggestions(newSuggestions);
+    setCurrentIndex(0); // Reset to first suggestion
+  }
+}, [selectedCriteria, ingredients]);
+```
+
+#### アーキテクチャ上の利点
+1. **疎結合**: SuggestionServiceとUIコンポーネントの明確な分離
+2. **拡張性**: 新しい評価軸の追加がpropsや状態変更なしで対応可能
+3. **再利用性**: UI_COLORSの統一により他コンポーネントでも色管理が一貫
+4. **保守性**: 外部化された定数により仕様変更への迅速対応
+
+#### パフォーマンス最適化
+```typescript
+// 効率的な状態更新
+const handleCriteriaSelect = (criteriaType: SuggestionType) => {
+  setSelectedCriteria(criteriaType);  // 単一状態更新
+};
+
+// 循環処理による提案表示
+const handleNext = () => {
+  if (suggestions.length > 0) {
+    setCurrentIndex((prev) => (prev + 1) % suggestions.length);  // 効率的な循環
+  }
+  onNext();
+};
+
+// 条件付きレンダリング
+if (!visible) {
+  return null;  // 早期リターンによるレンダリング回避
+}
+```
+
+#### 今後の拡張可能性
+- **複数基準選択**: 重み付きスコア計算による複合評価
+- **アニメーション**: React Native Reanimatedによる提案切り替え効果
+- **カスタム基準**: ユーザー定義の評価軸追加機能
+- **提案履歴**: 過去の提案とその採用状況の記録機能
+
+#### 学習ポイント
+1. **設計の一貫性**: アプリ全体での統一されたUIパターンの重要性
+2. **リファクタリングの価値**: コード重複除去による保守性大幅改善
+3. **外部化の威力**: 定数とスタイルの分離による変更容易性
+4. **テスト駆動の安心感**: 大規模リファクタリングでも既存機能の非破綻性保証
+
 ## 今後の拡張ポイント
 1. 仕切りの自由配置
 2. お弁当箱形状の追加

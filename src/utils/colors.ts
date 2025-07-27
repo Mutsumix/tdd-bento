@@ -55,6 +55,30 @@ export const COLOR_NAMES_JP = {
 export const DEFAULT_COLOR = COLOR_MAP.white;
 
 /**
+ * UI color constants for consistent theming across components
+ */
+export const UI_COLORS = {
+  primary: '#007AFF',       // iOS blue for primary actions
+  success: '#34C759',       // iOS green for success actions  
+  destructive: '#FF3B30',   // iOS red for destructive actions
+  background: {
+    overlay: 'rgba(0, 0, 0, 0.5)',
+    modal: 'white',
+    section: '#f8f9fa'
+  },
+  text: {
+    primary: '#333',
+    secondary: '#666', 
+    muted: '#999'
+  },
+  border: {
+    light: '#ddd',
+    medium: '#d0d0d0',
+    dark: '#e0e0e0'
+  }
+} as const;
+
+/**
  * Gets the hex color code for an ingredient color
  * @param color The ingredient color name
  * @returns The corresponding hex color code

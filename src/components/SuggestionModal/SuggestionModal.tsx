@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ingredient } from '@/types';
 import { SuggestionService, SuggestionType, SuggestionResult } from '@/services/suggestionService';
+import { UI_COLORS } from '@/utils/colors';
+import { SUGGESTION_CRITERIA } from '@/constants/suggestionCriteria';
 
 export interface SuggestionModalProps {
   visible: boolean;
@@ -22,13 +24,6 @@ export function SuggestionModal({
   const [suggestions, setSuggestions] = useState<SuggestionResult[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const criteria: Array<{ type: SuggestionType; label: string }> = [
-    { type: 'speed', label: '速さ重視' },
-    { type: 'nutrition', label: '栄養バランス' },
-    { type: 'color', label: 'いろどり' },
-    { type: 'season', label: '季節感' },
-    { type: 'cost', label: 'コスト重視' }
-  ];
 
   // Update suggestions when criteria or ingredients change
   useEffect(() => {
@@ -69,7 +64,7 @@ export function SuggestionModal({
           <View style={styles.criteriaContainer}>
             <Text style={styles.criteriaTitle}>評価軸を選択</Text>
             <View style={styles.criteriaButtons}>
-              {criteria.map((criterion) => (
+              {SUGGESTION_CRITERIA.map((criterion) => (
                 <TouchableOpacity
                   key={criterion.type}
                   style={[
@@ -121,7 +116,7 @@ export function SuggestionModal({
               testID="action-adopt"
               disabled={!currentSuggestion}
             >
-              <Text style={styles.adoptButtonText}>採用</Text>
+              <Text style={styles.buttonText}>採用</Text>
             </TouchableOpacity>
             
             <TouchableOpacity
@@ -130,7 +125,7 @@ export function SuggestionModal({
               testID="action-next"
               disabled={suggestions.length <= 1}
             >
-              <Text style={styles.nextButtonText}>次の提案</Text>
+              <Text style={styles.buttonText}>次の提案</Text>
             </TouchableOpacity>
             
             <TouchableOpacity
@@ -138,7 +133,7 @@ export function SuggestionModal({
               onPress={onCancel}
               testID="action-cancel"
             >
-              <Text style={styles.cancelButtonText}>キャンセル</Text>
+              <Text style={styles.buttonText}>キャンセル</Text>
             </TouchableOpacity>
           </View>
       </View>
@@ -149,13 +144,13 @@ export function SuggestionModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: UI_COLORS.background.overlay,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   modal: {
-    backgroundColor: 'white',
+    backgroundColor: UI_COLORS.background.modal,
     borderRadius: 16,
     padding: 24,
     width: '100%',
@@ -182,25 +177,25 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: 'white',
+    borderColor: UI_COLORS.border.light,
+    backgroundColor: UI_COLORS.background.modal,
   },
   criteriaButtonSelected: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
+    backgroundColor: UI_COLORS.primary,
+    borderColor: UI_COLORS.primary,
   },
   criteriaButtonText: {
     fontSize: 14,
-    color: '#333',
+    color: UI_COLORS.text.primary,
   },
   criteriaButtonTextSelected: {
-    color: 'white',
+    color: UI_COLORS.background.modal,
     fontWeight: 'bold',
   },
   suggestionContainer: {
     marginBottom: 24,
     padding: 16,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: UI_COLORS.background.section,
     borderRadius: 12,
   },
   suggestionTitle: {
@@ -216,21 +211,21 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 8,
-    color: '#333',
+    color: UI_COLORS.text.primary,
   },
   score: {
     fontSize: 16,
-    color: '#007AFF',
+    color: UI_COLORS.primary,
     marginBottom: 8,
   },
   reason: {
     fontSize: 14,
-    color: '#666',
+    color: UI_COLORS.text.secondary,
     textAlign: 'center',
   },
   noSuggestion: {
     fontSize: 16,
-    color: '#999',
+    color: UI_COLORS.text.muted,
     textAlign: 'center',
     padding: 20,
   },
@@ -246,26 +241,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   adoptButton: {
-    backgroundColor: '#34C759',
+    backgroundColor: UI_COLORS.success,
   },
   nextButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: UI_COLORS.primary,
   },
   cancelButton: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: UI_COLORS.destructive,
   },
-  adoptButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  nextButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  cancelButtonText: {
-    color: 'white',
+  buttonText: {
+    color: UI_COLORS.background.modal,
     fontWeight: 'bold',
     fontSize: 16,
   },
