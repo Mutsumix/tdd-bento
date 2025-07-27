@@ -1,9 +1,10 @@
 # TODO リスト
 
 ## In Progress
-- [🔴 RED] AddIngredientModalの基本UI実装 - 失敗テスト作成中
+- [🟢 GREEN] AddIngredientModalの基本UI実装 - 実装中
   - Started: 2025-01-27 21:40
   - Goal: モーダル表示、入力フォーム、保存・キャンセルボタンの基本UIを完成
+  - Red completed: 2025-01-27 21:45
 
 ## Next
 - [ ] 食材データの入力検証とstate管理
