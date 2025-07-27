@@ -37,6 +37,19 @@ export const PARTITION_COLORS: Record<Partition['type'], PartitionColorScheme> =
 } as const;
 
 /**
+ * Japanese color name mapping for UI display
+ * Used for suggestion reasons and user-friendly color descriptions
+ */
+export const COLOR_NAMES_JP = {
+  red: '赤',
+  yellow: '黄',
+  green: '緑', 
+  white: '白',
+  brown: '茶',
+  black: '黒'
+} as const;
+
+/**
  * Default color used when an ingredient color is not found
  */
 export const DEFAULT_COLOR = COLOR_MAP.white;
@@ -57,4 +70,13 @@ export function getColorCode(color: Ingredient['color']): string {
  */
 export function getPartitionColors(partitionType: Partition['type']): PartitionColorScheme {
   return PARTITION_COLORS[partitionType] ?? PARTITION_COLORS.rice;
+}
+
+/**
+ * Gets the Japanese name for an ingredient color
+ * @param color The ingredient color name
+ * @returns The corresponding Japanese color name
+ */
+export function getColorNameJP(color: Ingredient['color']): string {
+  return COLOR_NAMES_JP[color] ?? color;
 }

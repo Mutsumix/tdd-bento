@@ -1,4 +1,5 @@
 import { Ingredient } from '@/types';
+import { getColorNameJP } from '@/utils/colors';
 
 // Suggestion algorithm types
 export type SuggestionType = 'speed' | 'nutrition' | 'color';
@@ -231,16 +232,7 @@ export class SuggestionService {
    * Generate reason text for color diversity score
    */
   private static getColorReason(ingredient: Ingredient): string {
-    const colorNames = {
-      red: '赤',
-      yellow: '黄',
-      green: '緑',
-      white: '白',
-      brown: '茶',
-      black: '黒'
-    } as const;
-    
-    const colorName = colorNames[ingredient.color] || ingredient.color;
+    const colorName = getColorNameJP(ingredient.color);
     return `${colorName}色で彩り豊か`;
   }
 }
