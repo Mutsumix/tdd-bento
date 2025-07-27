@@ -1146,6 +1146,103 @@ calculateNutritionScore(ingredients) {
 3. **テストファーストの威力**: 複雑なアルゴリズムでも安心してリファクタリング可能
 4. **パターンの力**: 統一されたパターンによる将来拡張の容易化
 
+### 提案アルゴリズム（いろどり重視）の実装洞察
+
+#### 色管理システムの統合化
+```typescript
+// colors.tsファイルの拡張による一元的な色管理
+export const COLOR_MAP = {
+  // 既存のHEXカラーコード管理
+  red: '#E53E3E', yellow: '#F6E05E', green: '#38A169'
+};
+
+export const COLOR_NAMES_JP = {
+  // 新規追加：日本語色名マッピング
+  red: '赤', yellow: '黄', green: '緑'
+} as const;
+
+// ヘルパー関数による安全なアクセス
+export function getColorNameJP(color: Ingredient['color']): string {
+  return COLOR_NAMES_JP[color] ?? color;
+}
+```
+
+#### Strategy Patternの拡張性確認
+```typescript
+// 新しい評価軸の追加が既存パターンで対応可能
+const scoreCalculators = {
+  speed: (ingredient) => this.calculateSpeedScore(ingredient),
+  nutrition: (ingredient) => this.calculateNutritionScore([ingredient]),
+  color: (ingredient) => this.calculateColorScore([ingredient])  // 新規追加
+};
+
+// 型安全性を保ちながらの拡張
+export type SuggestionType = 'speed' | 'nutrition' | 'color';  // 段階的拡張
+```
+
+#### 色多様性アルゴリズムの設計
+```typescript
+// 単純明快な計算式による高い保守性
+calculateColorScore(ingredients) {
+  const colors = ingredients.map(ingredient => ingredient.color);
+  const uniqueCount = new Set(colors).size;
+  const duplicateCount = colors.length - uniqueCount;
+  
+  // 設定値による柔軟な調整
+  const colorVariety = uniqueCount * SUGGESTION_CONFIG.COLOR.VARIETY_BONUS;    // 20点/色
+  const colorPenalty = duplicateCount * SUGGESTION_CONFIG.COLOR.DUPLICATE_PENALTY; // 10点/重複
+  
+  return colorVariety - colorPenalty;
+}
+```
+
+#### TDD実装の成果
+- **24個の包括的テストケース**: 色多様性計算、個別食材評価、統合機能すべて検証
+- **境界値テスト**: 空配列、単一食材、完全重複、完全多様性のパターン網羅
+- **型安全性の確保**: SuggestionType拡張による実行時エラー防止
+- **下位互換性の維持**: 既存のspeed・nutrition機能への影響なし
+
+#### リファクタリングによる品質向上
+```typescript
+// Before: 重複するマッピング定義
+private static getColorReason(ingredient: Ingredient): string {
+  const colorNames = { red: '赤', yellow: '黄', green: '緑' };  // 重複
+  const colorName = colorNames[ingredient.color] || ingredient.color;
+  return `${colorName}色で彩り豊か`;
+}
+
+// After: 共通ユーティリティの活用
+private static getColorReason(ingredient: Ingredient): string {
+  const colorName = getColorNameJP(ingredient.color);  // 統合
+  return `${colorName}色で彩り豊か`;
+}
+```
+
+#### アーキテクチャ上の利点
+1. **関心の分離**: 色管理（colors.ts）とビジネスロジック（suggestionService.ts）の明確な分離
+2. **再利用性**: 日本語色名マッピングがUI表示とアルゴリズム評価で共通利用
+3. **拡張性**: 新しい色や表現の追加が既存コードに影響しない
+4. **一貫性**: アプリ全体で統一された色の扱い
+
+#### パフォーマンス最適化
+```typescript
+// O(n)の線形時間計算: 食材数に対して効率的
+// Set を使った重複除去: ハッシュベースの高速処理
+// 不変オブジェクト: メモリ効率と予測可能性の両立
+```
+
+#### 今後の拡張予定
+- **色彩理論の活用**: 補色・類似色による高度な色バランス評価
+- **視覚的重み付け**: 食材サイズに応じた色の影響度調整
+- **アクセシビリティ対応**: 色覚障害者向けの代替評価軸
+- **季節性との連携**: 季節ごとの好ましい色合いの考慮
+
+#### 学習ポイント
+1. **ユーティリティファースト**: 共通機能の早期抽出による重複排除
+2. **段階的型拡張**: SuggestionTypeの順次拡張による安全な機能追加
+3. **設定駆動開発**: ビジネスルールの外部化による柔軟性確保
+4. **統合的思考**: 新機能と既存システムの調和による品質向上
+
 ## 今後の拡張ポイント
 1. 仕切りの自由配置
 2. お弁当箱形状の追加
