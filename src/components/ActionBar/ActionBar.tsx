@@ -6,16 +6,28 @@ import { ACTION_BAR_CONFIG } from '@/constants/actionBar';
 export interface ActionBarProps {
   onSuggestion: () => void;
   onClear: () => void;
+  onAddIngredient: () => void;
   hasPlacedIngredients?: boolean;
 }
 
 export function ActionBar({ 
   onSuggestion, 
   onClear, 
+  onAddIngredient,
   hasPlacedIngredients = false 
 }: ActionBarProps) {
   return (
     <View style={styles.container} testID="action-bar">
+      <TouchableOpacity
+        style={[styles.button, styles.addButton]}
+        onPress={onAddIngredient}
+        testID="action-add-ingredient"
+      >
+        <Text style={styles.buttonText}>
+          {ACTION_BAR_CONFIG.BUTTON_TEXT.ADD_INGREDIENT || '食材追加'}
+        </Text>
+      </TouchableOpacity>
+
       <TouchableOpacity
         style={[
           styles.button,
@@ -73,6 +85,9 @@ const styles = StyleSheet.create({
   },
   clearButton: {
     backgroundColor: UI_COLORS.destructive,
+  },
+  addButton: {
+    backgroundColor: UI_COLORS.success,
   },
   disabledButton: {
     backgroundColor: UI_COLORS.border.light,

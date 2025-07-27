@@ -37,5 +37,7 @@ export const ACTION_BAR_CONFIG = {
     SUGGESTION: '提案を受ける',
     /** クリアボタンのテキスト */
     CLEAR: 'クリア',
+    /** 食材追加ボタンのテキスト */
+    ADD_INGREDIENT: '食材追加',
   }
 } as const;

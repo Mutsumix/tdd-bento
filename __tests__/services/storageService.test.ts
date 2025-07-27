@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { StorageService } from '@/services/storageService';
+import { StorageService } from '@/services/StorageService';
 import { Ingredient } from '@/types';
 import { PlacedIngredient } from '@/types';
 

@@ -1,9 +1,11 @@
 # TODO リスト
 
 ## In Progress
-- [🔴 RED] 新食材の保存とリスト更新機能 - 失敗テスト作成中
+- [🔵 REFACTOR] 新食材の保存とリスト更新機能 - リファクタリング準備中
   - Started: 2025-01-27 23:05
   - Goal: AddIngredientModalで入力された新食材をStorageServiceに保存し、食材リストに反映する
+  - Red completed: 2025-01-27 23:10 - IngredientService拡張とBentoDesigner統合のテスト作成
+  - Green completed: 2025-01-27 23:45 - コア機能実装完了、食材追加・保存・リスト更新動作確認
 
 ## Next
 - [ ] 食材追加ボタンの統合（BentoDesigner）

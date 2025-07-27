@@ -120,6 +120,7 @@ export function AddIngredientModal({ visible, onSave, onCancel }: AddIngredientM
                   key={catItem.value}
                   style={[styles.selectorButton, category === catItem.value && styles.selectorButtonSelected]}
                   onPress={() => setCategory(catItem.value)}
+                  testID={`category-${catItem.value}`}
                 >
                   <Text style={[styles.selectorText, category === catItem.value && styles.selectorTextSelected]}>
                     {catItem.label}
@@ -135,6 +136,7 @@ export function AddIngredientModal({ visible, onSave, onCancel }: AddIngredientM
                   key={colorItem.value}
                   style={[styles.colorButton, { backgroundColor: colorItem.hex }, color === colorItem.value && styles.colorButtonSelected]}
                   onPress={() => setColor(colorItem.value)}
+                  testID={`color-${colorItem.value}`}
                 >
                   <Text style={styles.colorText}>{colorItem.label}</Text>
                 </TouchableOpacity>

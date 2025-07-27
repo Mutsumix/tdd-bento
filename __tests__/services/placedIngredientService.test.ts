@@ -1,5 +1,5 @@
 import { PlacedIngredientService } from '@/services/placedIngredientService';
-import { StorageService } from '@/services/storageService';
+import { StorageService } from '@/services/StorageService';
 import { 
   Ingredient, 
   BentoBox, 
@@ -8,7 +8,7 @@ import {
 } from '@/types';
 
 // Mock StorageService
-jest.mock('@/services/storageService');
+jest.mock('@/services/StorageService');
 const mockStorageService = jest.mocked(StorageService);
 
 describe('PlacedIngredientService', () => {
