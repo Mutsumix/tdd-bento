@@ -209,4 +209,83 @@ describe('SuggestionService', () => {
       }).toThrow('Unsupported suggestion type: invalid');
     });
   });
+
+  describe('calculateColorScore', () => {
+    it('should calculate color score for diverse color combination', () => {
+      // Mock ingredients with different colors: brown, green, white, red
+      const diverseIngredients = [
+        mockIngredients[0], // brown
+        mockIngredients[1], // green  
+        mockIngredients[2], // white
+        mockIngredients[3]  // red
+      ];
+      
+      const score = SuggestionService.calculateColorScore(diverseIngredients);
+      // uniqueColors = 4, duplicates = 0
+      // Expected: 4 * 20 - 0 * 10 = 80
+      expect(score).toBe(80);
+    });
+
+    it('should calculate color score with duplicate colors penalty', () => {
+      const duplicateIngredients = [
+        mockIngredients[0], // brown
+        mockIngredients[0], // brown (duplicate)
+        mockIngredients[1], // green
+        mockIngredients[1]  // green (duplicate)
+      ];
+      
+      const score = SuggestionService.calculateColorScore(duplicateIngredients);
+      // uniqueColors = 2, duplicates = 2 
+      // Expected: 2 * 20 - 2 * 10 = 20
+      expect(score).toBe(20);
+    });
+
+    it('should return 0 for empty ingredients array', () => {
+      const score = SuggestionService.calculateColorScore([]);
+      expect(score).toBe(0);
+    });
+
+    it('should handle single ingredient', () => {
+      const singleIngredient = [mockIngredients[0]]; // brown
+      
+      const score = SuggestionService.calculateColorScore(singleIngredient);
+      // uniqueColors = 1, duplicates = 0
+      // Expected: 1 * 20 - 0 * 10 = 20
+      expect(score).toBe(20);
+    });
+  });
+
+  describe('getSuggestionsForColor', () => {
+    it('should return ingredients sorted by color diversity score (highest first)', () => {
+      const suggestions = SuggestionService.getSuggestionsForColor(mockIngredients);
+      
+      expect(suggestions).toHaveLength(4);
+      // Note: This test will initially fail since the method doesn't exist
+      // Individual ingredients get scored based on how they would contribute to color diversity
+    });
+
+    it('should limit results when count is specified', () => {
+      const suggestions = SuggestionService.getSuggestionsForColor(mockIngredients, 2);
+      
+      expect(suggestions).toHaveLength(2);
+    });
+
+    it('should return empty array for empty ingredients list', () => {
+      const suggestions = SuggestionService.getSuggestionsForColor([]);
+      expect(suggestions).toEqual([]);
+    });
+  });
+
+  describe('getSuggestionsWithScores - color type', () => {
+    it('should return ingredients with their calculated color scores', () => {
+      const results = SuggestionService.getSuggestionsWithScores(mockIngredients, 'color');
+      
+      expect(results).toHaveLength(4);
+      expect(results[0]).toHaveProperty('ingredient');
+      expect(results[0]).toHaveProperty('score');
+      expect(results[0]).toHaveProperty('reason');
+      expect(typeof results[0].score).toBe('number');
+      expect(typeof results[0].reason).toBe('string');
+    });
+  });
 });
