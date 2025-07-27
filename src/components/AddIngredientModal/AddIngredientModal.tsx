@@ -7,7 +7,8 @@ import {
   INGREDIENT_CATEGORIES,
   INGREDIENT_COLORS,
   ADD_INGREDIENT_MODAL_CONFIG,
-  ADD_INGREDIENT_FORM_LIMITS,
+  validateIngredientField,
+  VALIDATION_UI_MESSAGES,
 } from '@/constants/addIngredientModal';
 
 export interface AddIngredientModalProps {
@@ -36,59 +37,27 @@ export function AddIngredientModal({ visible, onSave, onCancel }: AddIngredientM
   const [cookingTime, setCookingTime] = useState(ADD_INGREDIENT_FORM_DEFAULTS.COOKING_TIME.toString());
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
 
-  const validateField = (field: keyof ValidationErrors, value: string): string | undefined => {
-    switch (field) {
-      case 'name':
-        if (value.trim().length < ADD_INGREDIENT_FORM_LIMITS.NAME.MIN_LENGTH) {
-          return '食材名は必須です';
-        }
-        if (value.trim().length > ADD_INGREDIENT_FORM_LIMITS.NAME.MAX_LENGTH) {
-          return `食材名は${ADD_INGREDIENT_FORM_LIMITS.NAME.MAX_LENGTH}文字以内で入力してください`;
-        }
-        break;
-      case 'vitamin':
-      case 'protein':
-      case 'fiber':
-        const numValue = parseInt(value);
-        if (isNaN(numValue) || numValue < ADD_INGREDIENT_FORM_LIMITS.NUTRITION.MIN || numValue > ADD_INGREDIENT_FORM_LIMITS.NUTRITION.MAX) {
-          return `${ADD_INGREDIENT_FORM_LIMITS.NUTRITION.MIN}-${ADD_INGREDIENT_FORM_LIMITS.NUTRITION.MAX}の範囲で入力してください`;
-        }
-        break;
-      case 'cost':
-        const costValue = parseInt(value);
-        if (isNaN(costValue) || costValue < ADD_INGREDIENT_FORM_LIMITS.COST.MIN || costValue > ADD_INGREDIENT_FORM_LIMITS.COST.MAX) {
-          return `${ADD_INGREDIENT_FORM_LIMITS.COST.MIN}-${ADD_INGREDIENT_FORM_LIMITS.COST.MAX}円の範囲で入力してください`;
-        }
-        break;
-      case 'cookingTime':
-        const timeValue = parseInt(value);
-        if (isNaN(timeValue) || timeValue < ADD_INGREDIENT_FORM_LIMITS.COOKING_TIME.MIN || timeValue > ADD_INGREDIENT_FORM_LIMITS.COOKING_TIME.MAX) {
-          return `${ADD_INGREDIENT_FORM_LIMITS.COOKING_TIME.MIN}-${ADD_INGREDIENT_FORM_LIMITS.COOKING_TIME.MAX}分の範囲で入力してください`;
-        }
-        break;
-    }
-    return undefined;
-  };
+  // バリデーション関数は外部化された関数を使用
 
   const updateValidation = () => {
     const errors: ValidationErrors = {};
     
-    const nameError = validateField('name', name);
+    const nameError = validateIngredientField('name', name);
     if (nameError) errors.name = nameError;
     
-    const vitaminError = validateField('vitamin', vitamin);
+    const vitaminError = validateIngredientField('vitamin', vitamin);
     if (vitaminError) errors.vitamin = vitaminError;
     
-    const proteinError = validateField('protein', protein);
+    const proteinError = validateIngredientField('protein', protein);
     if (proteinError) errors.protein = proteinError;
     
-    const fiberError = validateField('fiber', fiber);
+    const fiberError = validateIngredientField('fiber', fiber);
     if (fiberError) errors.fiber = fiberError;
     
-    const costError = validateField('cost', cost);
+    const costError = validateIngredientField('cost', cost);
     if (costError) errors.cost = costError;
     
-    const cookingTimeError = validateField('cookingTime', cookingTime);
+    const cookingTimeError = validateIngredientField('cookingTime', cookingTime);
     if (cookingTimeError) errors.cookingTime = cookingTimeError;
     
     setValidationErrors(errors);
@@ -253,7 +222,7 @@ export function AddIngredientModal({ visible, onSave, onCancel }: AddIngredientM
         <View style={styles.validationContainer} testID="validation-errors-container">
           {Object.keys(validationErrors).length > 0 && (
             <Text style={styles.validationSummary}>
-              入力エラーがあります。各項目を確認してください。
+              {VALIDATION_UI_MESSAGES.SUMMARY}
             </Text>
           )}
         </View>
@@ -403,19 +372,19 @@ const styles = StyleSheet.create({
     color: UI_COLORS.text.muted,
   },
   errorText: {
-    color: UI_COLORS.destructive,
-    fontSize: 12,
-    marginTop: 4,
-    marginBottom: 8,
+    color: ADD_INGREDIENT_MODAL_CONFIG.VALIDATION.ERROR_TEXT.COLOR,
+    fontSize: ADD_INGREDIENT_MODAL_CONFIG.VALIDATION.ERROR_TEXT.FONT_SIZE,
+    marginTop: ADD_INGREDIENT_MODAL_CONFIG.VALIDATION.ERROR_TEXT.MARGIN_TOP,
+    marginBottom: ADD_INGREDIENT_MODAL_CONFIG.VALIDATION.ERROR_TEXT.MARGIN_BOTTOM,
   },
   validationContainer: {
-    paddingHorizontal: ADD_INGREDIENT_MODAL_CONFIG.ACTION.PADDING,
-    paddingVertical: 8,
+    paddingHorizontal: ADD_INGREDIENT_MODAL_CONFIG.VALIDATION.CONTAINER.PADDING_HORIZONTAL,
+    paddingVertical: ADD_INGREDIENT_MODAL_CONFIG.VALIDATION.CONTAINER.PADDING_VERTICAL,
   },
   validationSummary: {
-    color: UI_COLORS.destructive,
-    fontSize: 14,
-    textAlign: 'center',
-    fontWeight: '500',
+    color: ADD_INGREDIENT_MODAL_CONFIG.VALIDATION.ERROR_TEXT.COLOR,
+    fontSize: ADD_INGREDIENT_MODAL_CONFIG.VALIDATION.SUMMARY.FONT_SIZE,
+    textAlign: ADD_INGREDIENT_MODAL_CONFIG.VALIDATION.SUMMARY.TEXT_ALIGN,
+    fontWeight: ADD_INGREDIENT_MODAL_CONFIG.VALIDATION.SUMMARY.FONT_WEIGHT,
   },
 });

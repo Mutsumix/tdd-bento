@@ -59,6 +59,23 @@ export const ADD_INGREDIENT_FORM_LIMITS = {
   },
 } as const;
 
+/** バリデーションエラーメッセージ */
+export const ADD_INGREDIENT_VALIDATION_MESSAGES = {
+  NAME: {
+    REQUIRED: '食材名は必須です',
+    TOO_LONG: (maxLength: number) => `食材名は${maxLength}文字以内で入力してください`,
+  },
+  NUTRITION: {
+    OUT_OF_RANGE: (min: number, max: number) => `${min}-${max}の範囲で入力してください`,
+  },
+  COST: {
+    OUT_OF_RANGE: (min: number, max: number) => `${min}-${max}円の範囲で入力してください`,
+  },
+  COOKING_TIME: {
+    OUT_OF_RANGE: (min: number, max: number) => `${min}-${max}分の範囲で入力してください`,
+  },
+} as const;
+
 /** UI関連の設定 */
 export const ADD_INGREDIENT_MODAL_CONFIG = {
   MODAL: {
@@ -93,4 +110,73 @@ export const ADD_INGREDIENT_MODAL_CONFIG = {
       PADDING_VERTICAL: 12,
     },
   },
+  VALIDATION: {
+    ERROR_TEXT: {
+      COLOR: '#FF6B6B',
+      FONT_SIZE: 12,
+      MARGIN_TOP: 4,
+      MARGIN_BOTTOM: 8,
+    },
+    CONTAINER: {
+      PADDING_HORIZONTAL: 24,
+      PADDING_VERTICAL: 8,
+    },
+    SUMMARY: {
+      FONT_SIZE: 14,
+      FONT_WEIGHT: '500' as const,
+      TEXT_ALIGN: 'center' as const,
+    },
+  },
+} as const;
+
+/** バリデーション関数のヘルパー */
+export const validateIngredientField = (
+  field: 'name' | 'vitamin' | 'protein' | 'fiber' | 'cost' | 'cookingTime',
+  value: string
+): string | undefined => {
+  switch (field) {
+    case 'name':
+      if (value.trim().length < ADD_INGREDIENT_FORM_LIMITS.NAME.MIN_LENGTH) {
+        return ADD_INGREDIENT_VALIDATION_MESSAGES.NAME.REQUIRED;
+      }
+      if (value.trim().length > ADD_INGREDIENT_FORM_LIMITS.NAME.MAX_LENGTH) {
+        return ADD_INGREDIENT_VALIDATION_MESSAGES.NAME.TOO_LONG(ADD_INGREDIENT_FORM_LIMITS.NAME.MAX_LENGTH);
+      }
+      break;
+    case 'vitamin':
+    case 'protein':
+    case 'fiber':
+      const numValue = parseInt(value);
+      if (isNaN(numValue) || numValue < ADD_INGREDIENT_FORM_LIMITS.NUTRITION.MIN || numValue > ADD_INGREDIENT_FORM_LIMITS.NUTRITION.MAX) {
+        return ADD_INGREDIENT_VALIDATION_MESSAGES.NUTRITION.OUT_OF_RANGE(
+          ADD_INGREDIENT_FORM_LIMITS.NUTRITION.MIN,
+          ADD_INGREDIENT_FORM_LIMITS.NUTRITION.MAX
+        );
+      }
+      break;
+    case 'cost':
+      const costValue = parseInt(value);
+      if (isNaN(costValue) || costValue < ADD_INGREDIENT_FORM_LIMITS.COST.MIN || costValue > ADD_INGREDIENT_FORM_LIMITS.COST.MAX) {
+        return ADD_INGREDIENT_VALIDATION_MESSAGES.COST.OUT_OF_RANGE(
+          ADD_INGREDIENT_FORM_LIMITS.COST.MIN,
+          ADD_INGREDIENT_FORM_LIMITS.COST.MAX
+        );
+      }
+      break;
+    case 'cookingTime':
+      const timeValue = parseInt(value);
+      if (isNaN(timeValue) || timeValue < ADD_INGREDIENT_FORM_LIMITS.COOKING_TIME.MIN || timeValue > ADD_INGREDIENT_FORM_LIMITS.COOKING_TIME.MAX) {
+        return ADD_INGREDIENT_VALIDATION_MESSAGES.COOKING_TIME.OUT_OF_RANGE(
+          ADD_INGREDIENT_FORM_LIMITS.COOKING_TIME.MIN,
+          ADD_INGREDIENT_FORM_LIMITS.COOKING_TIME.MAX
+        );
+      }
+      break;
+  }
+  return undefined;
+};
+
+/** バリデーションメッセージ定数 */
+export const VALIDATION_UI_MESSAGES = {
+  SUMMARY: '入力エラーがあります。各項目を確認してください。',
 } as const;
