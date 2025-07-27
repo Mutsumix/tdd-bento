@@ -2,7 +2,7 @@ import { Ingredient } from '@/types';
 import { getColorNameJP } from '@/utils/colors';
 
 // Suggestion algorithm types
-export type SuggestionType = 'speed' | 'nutrition' | 'color' | 'season';
+export type SuggestionType = 'speed' | 'nutrition' | 'color' | 'season' | 'cost';
 
 export type Season = 'spring' | 'summer' | 'autumn' | 'winter';
 
@@ -33,6 +33,9 @@ const SUGGESTION_CONFIG = {
   SEASON: {
     MATCHING_BONUS: 50,        // Bonus points for matching current season
     ALL_SEASON_BONUS: 25       // Bonus points for all-season ingredients
+  },
+  COST: {
+    BASE_VALUE: 1000           // Base value for cost calculation (1000 - cost = score)
   }
 } as const;
 
@@ -172,14 +175,16 @@ export class SuggestionService {
       speed: (ingredient: Ingredient) => this.calculateSpeedScore(ingredient),
       nutrition: (ingredient: Ingredient) => this.calculateNutritionScore([ingredient]),
       color: (ingredient: Ingredient) => this.calculateColorScore([ingredient]),
-      season: (ingredient: Ingredient) => this.calculateSeasonScore(ingredient, currentSeason)
+      season: (ingredient: Ingredient) => this.calculateSeasonScore(ingredient, currentSeason),
+      cost: (ingredient: Ingredient) => this.calculateCostScore(ingredient)
     };
 
     const reasonGenerators = {
       speed: (ingredient: Ingredient) => this.getSpeedReason(ingredient),
       nutrition: (ingredient: Ingredient) => this.getNutritionReason(ingredient),
       color: (ingredient: Ingredient) => this.getColorReason(ingredient),
-      season: (ingredient: Ingredient) => this.getSeasonReason(ingredient)
+      season: (ingredient: Ingredient) => this.getSeasonReason(ingredient),
+      cost: (ingredient: Ingredient) => this.getCostReason(ingredient)
     };
 
     const scoreCalculator = scoreCalculators[type];
@@ -323,5 +328,49 @@ export class SuggestionService {
       winter: '冬'
     };
     return seasonNames[season];
+  }
+
+  /**
+   * Calculate cost-focused score for an ingredient
+   * Formula: score = BASE_VALUE - ingredient.cost (lower cost = higher score)
+   */
+  static calculateCostScore(ingredient: Ingredient): number {
+    return SUGGESTION_CONFIG.COST.BASE_VALUE - ingredient.cost;
+  }
+
+  /**
+   * Get ingredient suggestions sorted by cost score (highest first)
+   */
+  static getSuggestionsForCost(ingredients: Ingredient[], count?: number): Ingredient[] {
+    if (ingredients.length === 0) {
+      return [];
+    }
+
+    const sorted = [...ingredients].sort((a, b) => {
+      const scoreA = this.calculateCostScore(a);
+      const scoreB = this.calculateCostScore(b);
+      return scoreB - scoreA; // Descending order (highest score first)
+    });
+
+    return count ? sorted.slice(0, count) : sorted;
+  }
+
+  /**
+   * Generate reason text for cost score
+   */
+  private static getCostReason(ingredient: Ingredient): string {
+    const cost = ingredient.cost;
+    
+    if (cost <= 50) {
+      return 'とても安価でお得';
+    } else if (cost <= 100) {
+      return '安価でコスパ良好';
+    } else if (cost <= 200) {
+      return '標準的な価格';
+    } else if (cost <= 400) {
+      return 'やや高価';
+    } else {
+      return '高価な食材';
+    }
   }
 }

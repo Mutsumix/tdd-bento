@@ -1,9 +1,10 @@
 # TODO リスト
 
 ## In Progress
-- [🔴 RED] 提案アルゴリズム（コスト重視）の実装 - 失敗テスト作成中
+- [🟢 GREEN] 提案アルゴリズム（コスト重視）の実装 - 実装中
   - Started: 2025-01-27 14:50
   - Goal: 総コストが低いほど高スコアとなるコスト重視アルゴリズム（score = 1000 - totalCost）
+  - Red completed: 2025-01-27 15:00
 
 ## Next
 - [ ] SuggestionModalの実装
