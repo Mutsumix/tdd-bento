@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ingredient } from '@/types';
 import { UI_COLORS } from '@/utils/colors';
@@ -7,6 +7,7 @@ import {
   INGREDIENT_CATEGORIES,
   INGREDIENT_COLORS,
   ADD_INGREDIENT_MODAL_CONFIG,
+  ADD_INGREDIENT_FORM_LIMITS,
 } from '@/constants/addIngredientModal';
 
 export interface AddIngredientModalProps {
@@ -14,6 +15,15 @@ export interface AddIngredientModalProps {
   onSave: (ingredient: Omit<Ingredient, 'id' | 'defaultSize' | 'icon'>) => void;
   onCancel: () => void;
 }
+
+type ValidationErrors = {
+  name?: string;
+  vitamin?: string;
+  protein?: string;
+  fiber?: string;
+  cost?: string;
+  cookingTime?: string;
+};
 
 export function AddIngredientModal({ visible, onSave, onCancel }: AddIngredientModalProps) {
   const [name, setName] = useState('');
@@ -24,6 +34,69 @@ export function AddIngredientModal({ visible, onSave, onCancel }: AddIngredientM
   const [fiber, setFiber] = useState(ADD_INGREDIENT_FORM_DEFAULTS.NUTRITION.FIBER.toString());
   const [cost, setCost] = useState(ADD_INGREDIENT_FORM_DEFAULTS.COST.toString());
   const [cookingTime, setCookingTime] = useState(ADD_INGREDIENT_FORM_DEFAULTS.COOKING_TIME.toString());
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+
+  const validateField = (field: keyof ValidationErrors, value: string): string | undefined => {
+    switch (field) {
+      case 'name':
+        if (value.trim().length < ADD_INGREDIENT_FORM_LIMITS.NAME.MIN_LENGTH) {
+          return '食材名は必須です';
+        }
+        if (value.trim().length > ADD_INGREDIENT_FORM_LIMITS.NAME.MAX_LENGTH) {
+          return `食材名は${ADD_INGREDIENT_FORM_LIMITS.NAME.MAX_LENGTH}文字以内で入力してください`;
+        }
+        break;
+      case 'vitamin':
+      case 'protein':
+      case 'fiber':
+        const numValue = parseInt(value);
+        if (isNaN(numValue) || numValue < ADD_INGREDIENT_FORM_LIMITS.NUTRITION.MIN || numValue > ADD_INGREDIENT_FORM_LIMITS.NUTRITION.MAX) {
+          return `${ADD_INGREDIENT_FORM_LIMITS.NUTRITION.MIN}-${ADD_INGREDIENT_FORM_LIMITS.NUTRITION.MAX}の範囲で入力してください`;
+        }
+        break;
+      case 'cost':
+        const costValue = parseInt(value);
+        if (isNaN(costValue) || costValue < ADD_INGREDIENT_FORM_LIMITS.COST.MIN || costValue > ADD_INGREDIENT_FORM_LIMITS.COST.MAX) {
+          return `${ADD_INGREDIENT_FORM_LIMITS.COST.MIN}-${ADD_INGREDIENT_FORM_LIMITS.COST.MAX}円の範囲で入力してください`;
+        }
+        break;
+      case 'cookingTime':
+        const timeValue = parseInt(value);
+        if (isNaN(timeValue) || timeValue < ADD_INGREDIENT_FORM_LIMITS.COOKING_TIME.MIN || timeValue > ADD_INGREDIENT_FORM_LIMITS.COOKING_TIME.MAX) {
+          return `${ADD_INGREDIENT_FORM_LIMITS.COOKING_TIME.MIN}-${ADD_INGREDIENT_FORM_LIMITS.COOKING_TIME.MAX}分の範囲で入力してください`;
+        }
+        break;
+    }
+    return undefined;
+  };
+
+  const updateValidation = () => {
+    const errors: ValidationErrors = {};
+    
+    const nameError = validateField('name', name);
+    if (nameError) errors.name = nameError;
+    
+    const vitaminError = validateField('vitamin', vitamin);
+    if (vitaminError) errors.vitamin = vitaminError;
+    
+    const proteinError = validateField('protein', protein);
+    if (proteinError) errors.protein = proteinError;
+    
+    const fiberError = validateField('fiber', fiber);
+    if (fiberError) errors.fiber = fiberError;
+    
+    const costError = validateField('cost', cost);
+    if (costError) errors.cost = costError;
+    
+    const cookingTimeError = validateField('cookingTime', cookingTime);
+    if (cookingTimeError) errors.cookingTime = cookingTimeError;
+    
+    setValidationErrors(errors);
+  };
+
+  useEffect(() => {
+    updateValidation();
+  }, [name, vitamin, protein, fiber, cost, cookingTime]);
 
   const handleSave = () => {
     const ingredientData = {
@@ -44,7 +117,7 @@ export function AddIngredientModal({ visible, onSave, onCancel }: AddIngredientM
     onSave(ingredientData);
   };
 
-  const isFormValid = name.trim().length > 0;
+  const isFormValid = name.trim().length > 0 && Object.keys(validationErrors).length === 0;
 
   if (!visible) {
     return null;
@@ -65,6 +138,11 @@ export function AddIngredientModal({ visible, onSave, onCancel }: AddIngredientM
             >
               <Text>{name || '食材名を入力'}</Text>
             </View>
+            {validationErrors.name && (
+              <Text style={styles.errorText} testID="name-error-message">
+                {validationErrors.name}
+              </Text>
+            )}
             
             <Text style={styles.label}>カテゴリ</Text>
             <View style={styles.selectorContainer} testID="category-selector">
@@ -106,6 +184,11 @@ export function AddIngredientModal({ visible, onSave, onCancel }: AddIngredientM
             >
               <Text>{vitamin || '50'}</Text>
             </View>
+            {validationErrors.vitamin && (
+              <Text style={styles.errorText} testID="vitamin-error-message">
+                {validationErrors.vitamin}
+              </Text>
+            )}
             
             <Text style={styles.label}>タンパク質 (0-100)</Text>
             <View
@@ -114,6 +197,11 @@ export function AddIngredientModal({ visible, onSave, onCancel }: AddIngredientM
             >
               <Text>{protein || '50'}</Text>
             </View>
+            {validationErrors.protein && (
+              <Text style={styles.errorText} testID="protein-error-message">
+                {validationErrors.protein}
+              </Text>
+            )}
             
             <Text style={styles.label}>食物繊維 (0-100)</Text>
             <View
@@ -122,6 +210,11 @@ export function AddIngredientModal({ visible, onSave, onCancel }: AddIngredientM
             >
               <Text>{fiber || '50'}</Text>
             </View>
+            {validationErrors.fiber && (
+              <Text style={styles.errorText} testID="fiber-error-message">
+                {validationErrors.fiber}
+              </Text>
+            )}
           </View>
 
           {/* Additional Info Section */}
@@ -135,6 +228,11 @@ export function AddIngredientModal({ visible, onSave, onCancel }: AddIngredientM
             >
               <Text>{cost || '100'}</Text>
             </View>
+            {validationErrors.cost && (
+              <Text style={styles.errorText} testID="cost-error-message">
+                {validationErrors.cost}
+              </Text>
+            )}
             
             <Text style={styles.label}>調理時間 (分)</Text>
             <View
@@ -143,7 +241,21 @@ export function AddIngredientModal({ visible, onSave, onCancel }: AddIngredientM
             >
               <Text>{cookingTime || '5'}</Text>
             </View>
+            {validationErrors.cookingTime && (
+              <Text style={styles.errorText} testID="cooking-time-error-message">
+                {validationErrors.cookingTime}
+              </Text>
+            )}
           </View>
+        </View>
+
+        {/* Validation Errors Container */}
+        <View style={styles.validationContainer} testID="validation-errors-container">
+          {Object.keys(validationErrors).length > 0 && (
+            <Text style={styles.validationSummary}>
+              入力エラーがあります。各項目を確認してください。
+            </Text>
+          )}
         </View>
 
         {/* Action Buttons */}
@@ -289,5 +401,21 @@ const styles = StyleSheet.create({
   },
   disabledText: {
     color: UI_COLORS.text.muted,
+  },
+  errorText: {
+    color: UI_COLORS.destructive,
+    fontSize: 12,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  validationContainer: {
+    paddingHorizontal: ADD_INGREDIENT_MODAL_CONFIG.ACTION.PADDING,
+    paddingVertical: 8,
+  },
+  validationSummary: {
+    color: UI_COLORS.destructive,
+    fontSize: 14,
+    textAlign: 'center',
+    fontWeight: '500',
   },
 });
