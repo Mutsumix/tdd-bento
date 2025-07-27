@@ -1,7 +1,7 @@
 import { Ingredient } from '@/types';
 
 // Suggestion algorithm types
-export type SuggestionType = 'speed' | 'nutrition';
+export type SuggestionType = 'speed' | 'nutrition' | 'color';
 
 export interface SuggestionResult {
   ingredient: Ingredient;
@@ -22,6 +22,10 @@ const SUGGESTION_CONFIG = {
   SPEED: {
     FROZEN_BONUS: 50,          // Bonus points for frozen ingredients
     READY_BONUS: 50            // Bonus points for ready-to-eat ingredients
+  },
+  COLOR: {
+    VARIETY_BONUS: 20,         // Bonus points per unique color
+    DUPLICATE_PENALTY: 10      // Penalty points per duplicate color
   }
 } as const;
 
@@ -108,17 +112,65 @@ export class SuggestionService {
   }
 
   /**
+   * Calculate color diversity score for ingredient combination
+   * Formula: colorVariety = uniqueColors.length * 20
+   *          colorPenalty = duplicateColors.length * 10
+   *          score = colorVariety - colorPenalty
+   */
+  static calculateColorScore(ingredients: Ingredient[]): number {
+    if (ingredients.length === 0) {
+      return 0;
+    }
+
+    // Extract colors from all ingredients
+    const colors = ingredients.map(ingredient => ingredient.color);
+    
+    // Calculate unique colors
+    const uniqueColors = new Set(colors);
+    const uniqueCount = uniqueColors.size;
+    
+    // Calculate duplicates (total colors - unique colors)
+    const duplicateCount = colors.length - uniqueCount;
+    
+    // Calculate score using configuration constants
+    const colorVariety = uniqueCount * SUGGESTION_CONFIG.COLOR.VARIETY_BONUS;
+    const colorPenalty = duplicateCount * SUGGESTION_CONFIG.COLOR.DUPLICATE_PENALTY;
+    
+    return colorVariety - colorPenalty;
+  }
+
+  /**
+   * Get ingredient suggestions sorted by color diversity score (highest first)
+   */
+  static getSuggestionsForColor(ingredients: Ingredient[], count?: number): Ingredient[] {
+    if (ingredients.length === 0) {
+      return [];
+    }
+
+    // For individual ingredients, calculate their contribution to color diversity
+    const sorted = [...ingredients].sort((a, b) => {
+      const scoreA = this.calculateColorScore([a]);
+      const scoreB = this.calculateColorScore([b]);
+      return scoreB - scoreA; // Descending order (highest score first)
+    });
+
+    return count ? sorted.slice(0, count) : sorted;
+  }
+
+  /**
    * Get ingredient suggestions with their scores and reasons
    */
   static getSuggestionsWithScores(ingredients: Ingredient[], type: SuggestionType): SuggestionResult[] {
     const scoreCalculators = {
       speed: (ingredient: Ingredient) => this.calculateSpeedScore(ingredient),
-      nutrition: (ingredient: Ingredient) => this.calculateNutritionScore([ingredient])
+      nutrition: (ingredient: Ingredient) => this.calculateNutritionScore([ingredient]),
+      color: (ingredient: Ingredient) => this.calculateColorScore([ingredient])
     };
 
     const reasonGenerators = {
       speed: (ingredient: Ingredient) => this.getSpeedReason(ingredient),
-      nutrition: (ingredient: Ingredient) => this.getNutritionReason(ingredient)
+      nutrition: (ingredient: Ingredient) => this.getNutritionReason(ingredient),
+      color: (ingredient: Ingredient) => this.getColorReason(ingredient)
     };
 
     const scoreCalculator = scoreCalculators[type];
@@ -173,5 +225,22 @@ export class SuggestionService {
     } else {
       return 'low nutrition';
     }
+  }
+
+  /**
+   * Generate reason text for color diversity score
+   */
+  private static getColorReason(ingredient: Ingredient): string {
+    const colorNames = {
+      red: '赤',
+      yellow: '黄',
+      green: '緑',
+      white: '白',
+      brown: '茶',
+      black: '黒'
+    } as const;
+    
+    const colorName = colorNames[ingredient.color] || ingredient.color;
+    return `${colorName}色で彩り豊か`;
   }
 }
