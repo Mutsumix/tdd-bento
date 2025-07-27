@@ -1,11 +1,12 @@
 # TODO リスト
 
 ## In Progress
-- [🔄 REFACTOR] パーティションタイプによる視覚的区別の追加 - リファクタリング中
+- [📝 FEEDBACK] パーティションタイプによる視覚的区別の追加 - 設計フィードバック中
   - Started: 2025-01-26 20:05
   - Goal: riceパーティション（白系）とsideパーティション（明るいグレー系）の視覚的区別
   - Red completed: 2025-01-26 20:10
   - Green completed: 2025-01-26 20:15
+  - Refactor completed: 2025-01-26 20:20
 
 ## Next
 - [ ] 提案アルゴリズム（速さ重視）の実装
