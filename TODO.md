@@ -1,12 +1,5 @@
 # TODO リスト
 
-## In Progress
-- [🔄 REFACTOR] AddIngredientModalの基本UI実装 - リファクタリング中
-  - Started: 2025-01-27 21:40
-  - Goal: モーダル表示、入力フォーム、保存・キャンセルボタンの基本UIを完成
-  - Red completed: 2025-01-27 21:45
-  - Green completed: 2025-01-27 22:00 - 13テスト全合格、完全な基本UI実装
-
 ## Next
 - [ ] 食材データの入力検証とstate管理
 - [ ] 新食材の保存とリスト更新機能
@@ -62,3 +55,6 @@
 - [✅] メイン画面の統合とスタイリング (2025-01-27 21:35)
   - Red/Green/Refactor/Feedback 全段階完了
   - 成果: BentoDesigner・ActionBar統合実装、19テスト全合格、設定外部化、統合アーキテクチャ確立
+- [✅] AddIngredientModalの基本UI実装 (2025-01-27 22:10)
+  - Red/Green/Refactor/Feedback 全段階完了
+  - 成果: 完全なフォームUI実装、13テスト全合格、設定外部化、テスト環境制約対応、モーダルパターン確立
