@@ -1,4 +1,4 @@
-import { Ingredient } from '@/types';
+import { Ingredient, Partition } from '@/types';
 
 /**
  * Color mapping from ingredient color names to actual color codes
@@ -14,6 +14,29 @@ export const COLOR_MAP = {
 } as const;
 
 /**
+ * Partition color scheme interface for type safety
+ */
+export interface PartitionColorScheme {
+  backgroundColor: string;
+  borderColor: string;
+}
+
+/**
+ * Color configuration for different partition types
+ * Uses consistent color palette with ingredient colors
+ */
+export const PARTITION_COLORS: Record<Partition['type'], PartitionColorScheme> = {
+  rice: {
+    backgroundColor: '#ffffff',    // Pure white for rice compartment (brighter than COLOR_MAP.white)
+    borderColor: '#e0e0e0'        // Light gray border
+  },
+  side: {
+    backgroundColor: '#f5f5f5',    // Light gray for side dish compartment  
+    borderColor: '#d0d0d0'        // Slightly darker gray border
+  }
+} as const;
+
+/**
  * Default color used when an ingredient color is not found
  */
 export const DEFAULT_COLOR = COLOR_MAP.white;
@@ -25,4 +48,13 @@ export const DEFAULT_COLOR = COLOR_MAP.white;
  */
 export function getColorCode(color: Ingredient['color']): string {
   return COLOR_MAP[color] ?? DEFAULT_COLOR;
+}
+
+/**
+ * Gets the color configuration for a specific partition type
+ * @param partitionType The type of partition ('rice' | 'side')
+ * @returns Color configuration object with backgroundColor and borderColor
+ */
+export function getPartitionColors(partitionType: Partition['type']): PartitionColorScheme {
+  return PARTITION_COLORS[partitionType] ?? PARTITION_COLORS.rice;
 }

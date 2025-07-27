@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { Partition } from '@/types';
-import { getPartitionColors } from '@/utils/partitionStyles';
+import { getPartitionColors } from '@/utils/colors';
 
 export interface PartitionAreaProps {
   partition: Partition;
