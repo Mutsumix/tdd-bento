@@ -1,7 +1,11 @@
 # TODO リスト
 
+## In Progress
+- [🔴 RED] 食材データの入力検証とstate管理 - 失敗テスト作成中
+  - Started: 2025-01-27 22:15
+  - Goal: リアルタイムvalidation、エラー表示、フォーム状態管理の強化
+
 ## Next
-- [ ] 食材データの入力検証とstate管理
 - [ ] 新食材の保存とリスト更新機能
 - [ ] 食材追加ボタンの統合（BentoDesigner）
 
