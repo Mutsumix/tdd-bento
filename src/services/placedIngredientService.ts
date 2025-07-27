@@ -1,4 +1,4 @@
-import { StorageService } from './storageService';
+import { StorageService } from './StorageService';
 import { isOverlapping, fitsWithinBounds, Position, Size } from '@/utils/collision';
 import { PLACEMENT_ERROR_MESSAGES, ID_GENERATION } from '@/constants/placement';
 import { 
