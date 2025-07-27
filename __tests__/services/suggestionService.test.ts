@@ -288,4 +288,120 @@ describe('SuggestionService', () => {
       expect(typeof results[0].reason).toBe('string');
     });
   });
+
+  describe('calculateSeasonScore', () => {
+    // Mock ingredients with different seasons
+    const springIngredient: Ingredient = {
+      ...mockIngredients[0],
+      season: 'spring'
+    };
+    
+    const summerIngredient: Ingredient = {
+      ...mockIngredients[1], 
+      season: 'summer'
+    };
+    
+    const allSeasonIngredient: Ingredient = {
+      ...mockIngredients[2],
+      season: 'all'
+    };
+    
+    const noSeasonIngredient: Ingredient = {
+      ...mockIngredients[3]
+      // No season property means it should be treated as undefined
+    };
+
+    it('should give 50 points for matching current season', () => {
+      // Test with spring as current season
+      const score = SuggestionService.calculateSeasonScore(springIngredient, 'spring');
+      expect(score).toBe(50);
+    });
+
+    it('should give 0 points for non-matching season', () => {
+      // Test summer ingredient in spring
+      const score = SuggestionService.calculateSeasonScore(summerIngredient, 'spring');
+      expect(score).toBe(0);
+    });
+
+    it('should give 25 points for all-season ingredients', () => {
+      const score = SuggestionService.calculateSeasonScore(allSeasonIngredient, 'spring');
+      expect(score).toBe(25);
+    });
+
+    it('should give 0 points for ingredients without season', () => {
+      const score = SuggestionService.calculateSeasonScore(noSeasonIngredient, 'spring');
+      expect(score).toBe(0);
+    });
+
+    it('should use actual current season when not specified', () => {
+      // This will use the system's current season
+      const score = SuggestionService.calculateSeasonScore(springIngredient);
+      expect(typeof score).toBe('number');
+      expect(score).toBeGreaterThanOrEqual(0);
+    });
+  });
+
+  describe('getSuggestionsForSeason', () => {
+    const seasonalIngredients: Ingredient[] = [
+      { ...mockIngredients[0], season: 'spring' },
+      { ...mockIngredients[1], season: 'summer' },
+      { ...mockIngredients[2], season: 'all' },
+      { ...mockIngredients[3] } // no season
+    ];
+
+    it('should return ingredients sorted by season score (highest first)', () => {
+      const suggestions = SuggestionService.getSuggestionsForSeason(seasonalIngredients, 'spring');
+      
+      expect(suggestions).toHaveLength(4);
+      // Spring ingredient should be first (50 points)
+      expect(suggestions[0].season).toBe('spring');
+      // All-season should be second (25 points)
+      expect(suggestions[1].season).toBe('all');
+    });
+
+    it('should limit results when count is specified', () => {
+      const suggestions = SuggestionService.getSuggestionsForSeason(seasonalIngredients, 'spring', 2);
+      
+      expect(suggestions).toHaveLength(2);
+    });
+
+    it('should return empty array for empty ingredients list', () => {
+      const suggestions = SuggestionService.getSuggestionsForSeason([], 'spring');
+      expect(suggestions).toEqual([]);
+    });
+  });
+
+  describe('getSuggestionsWithScores - season type', () => {
+    it('should return ingredients with their calculated season scores', () => {
+      const seasonalIngredients: Ingredient[] = [
+        { ...mockIngredients[0], season: 'spring' },
+        { ...mockIngredients[1], season: 'summer' },
+        { ...mockIngredients[2], season: 'all' }
+      ];
+      
+      const results = SuggestionService.getSuggestionsWithScores(seasonalIngredients, 'season', 'spring');
+      
+      expect(results).toHaveLength(3);
+      expect(results[0]).toHaveProperty('ingredient');
+      expect(results[0]).toHaveProperty('score');
+      expect(results[0]).toHaveProperty('reason');
+      expect(typeof results[0].score).toBe('number');
+      expect(typeof results[0].reason).toBe('string');
+    });
+  });
+
+  describe('getCurrentSeason', () => {
+    it('should return a valid season', () => {
+      const season = SuggestionService.getCurrentSeason();
+      expect(['spring', 'summer', 'autumn', 'winter']).toContain(season);
+    });
+
+    it('should return correct season for given month', () => {
+      // Test specific months
+      expect(SuggestionService.getCurrentSeason(new Date('2024-03-15'))).toBe('spring'); // March
+      expect(SuggestionService.getCurrentSeason(new Date('2024-06-15'))).toBe('summer'); // June  
+      expect(SuggestionService.getCurrentSeason(new Date('2024-09-15'))).toBe('autumn'); // September
+      expect(SuggestionService.getCurrentSeason(new Date('2024-12-15'))).toBe('winter'); // December
+    });
+  });
 });
