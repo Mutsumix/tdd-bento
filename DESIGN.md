@@ -848,6 +848,155 @@ interface CreatePlacedIngredientInput {
 - **配置制約**: 食材種別によるパーティション制限
 - **undo/redo**: 配置操作の取り消し・やり直し機能
 
+---
+
+## ユーザー食材管理機能の設計とアーキテクチャ
+
+### 機能概要
+AddIngredientModalを通じて新食材を追加し、永続化・リスト反映する機能。
+
+### アーキテクチャ設計
+
+#### IngredientService拡張パターン
+```typescript
+// 既存の静的クラスを拡張する手法
+export class IngredientService {
+  private static ingredients: Ingredient[] = getInitialIngredients();
+  private static userIngredients: Ingredient[] = []; // 新規追加
+
+  // ユーザー食材管理メソッド群
+  static createUserIngredient(data: Omit<Ingredient, 'id' | 'defaultSize' | 'icon'>): Ingredient
+  static async addUserIngredient(data: ...): Promise<Ingredient>
+  static async getAllWithUserIngredients(): Promise<Ingredient[]>
+  static async loadUserIngredients(): Promise<void>
+  static async findByIdAsync(id: string): Promise<Ingredient | null>
+}
+```
+
+**設計判断の根拠**:
+1. **既存APIとの一貫性**: findByIdとfindByIdAsyncで同期・非同期版を提供
+2. **キャッシュ分離**: initialとuserで別々の配列管理による明確な責任分離
+3. **型安全性**: Omit<Ingredient, ...>による部分型定義で必須フィールド自動生成
+
+#### 永続化統合パターン
+```typescript
+// StorageServiceとの統合による一貫した永続化
+class StorageService {
+  static async addUserIngredient(ingredient: Ingredient): Promise<void>
+  static async loadUserIngredients(): Promise<Ingredient[]>
+}
+
+// IngredientServiceでの利用
+static async addUserIngredient(data): Promise<Ingredient> {
+  const newIngredient = this.createUserIngredient(data);
+  this.userIngredients.push(newIngredient); // キャッシュ更新
+  await StorageService.addUserIngredient(newIngredient); // 永続化
+  return newIngredient;
+}
+```
+
+#### 複数モーダル管理パターン
+```typescript
+// BentoDesignerでの状態管理
+const [isModalVisible, setIsModalVisible] = useState(false); // 提案モーダル
+const [isAddIngredientModalVisible, setIsAddIngredientModalVisible] = useState(false); // 食材追加
+
+// 統一されたエラーハンドリングパターン
+const handleIngredientSave = async (data) => {
+  try {
+    await IngredientService.addUserIngredient(data);
+    const updated = await IngredientService.getAllWithUserIngredients();
+    setIngredients(updated);
+    setIsAddIngredientModalVisible(false); // 成功時のみ閉じる
+  } catch (error) {
+    console.error('Failed to save:', error);
+    // モーダルを開いたまま、ユーザーにリトライ機会を提供
+  }
+};
+```
+
+### 実装中に発見された課題と解決策
+
+#### 1. useEffectでの非同期エラーハンドリング
+**課題**: useEffect内の非同期処理でエラーが発生した場合のUX
+```typescript
+// ❌ 問題のあるパターン
+useEffect(() => {
+  const load = async () => {
+    await IngredientService.loadUserIngredients(); // エラー時に画面が空になる
+    setIngredients(await IngredientService.getAllWithUserIngredients());
+  };
+  load();
+}, []);
+
+// ✅ 改善されたパターン  
+useEffect(() => {
+  const load = async () => {
+    try {
+      await IngredientService.loadUserIngredients();
+      setIngredients(await IngredientService.getAllWithUserIngredients());
+    } catch (error) {
+      console.error('Failed to load user ingredients:', error);
+      setIngredients(getInitialIngredients()); // フォールバック
+    }
+  };
+  load();
+}, []);
+```
+
+#### 2. テスト環境でのReact Act警告
+**課題**: useEffectでの非同期状態更新がテスト環境でact()警告を発生
+**解決策**: 
+- テストでのwaitForとact()の適切な組み合わせ
+- モックの非同期処理を適切に模擬
+- testIDによる確実な要素特定
+
+#### 3. エラー時のモーダルUX設計
+**現在の実装**: エラー時にモーダルを開いたままにしてリトライ機会を提供
+**今後の改善予定**: ユーザーフレンドリーなエラーメッセージ表示機能
+
+### テスト戦略
+
+#### 単体テスト（IngredientService）
+```typescript
+// ID生成の一意性、型安全性、永続化統合の検証
+describe('IngredientService - User Ingredient Management', () => {
+  // createUserIngredient: ID生成、デフォルト値設定
+  // addUserIngredient: 永続化統合、キャッシュ更新
+  // getAllWithUserIngredients: 初期・ユーザー食材の統合
+  // loadUserIngredients: StorageServiceとの連携
+  // findByIdAsync: 統合検索機能
+});
+```
+
+#### 統合テスト（BentoDesigner）
+```typescript
+// UI操作からデータ永続化まで一貫したテスト
+describe('BentoDesigner - Add Ingredient Integration', () => {
+  // モーダル開閉、フォーム入力、保存処理、リスト更新の統合シナリオ
+});
+```
+
+### パフォーマンス考慮事項
+
+1. **メモリ効率**: 初期食材とユーザー食材の分離キャッシュ
+2. **UI応答性**: エラー時のモーダル状態維持によるUX向上
+3. **データ一貫性**: キャッシュ更新→永続化の順序保証
+
+### 型安全性の強化
+
+```typescript
+// 部分型定義による自動補完とエラー防止
+type UserIngredientInput = Omit<Ingredient, 'id' | 'defaultSize' | 'icon'>;
+
+// 生成される型
+interface GeneratedIngredient extends UserIngredientInput {
+  id: string; // user-ingredient-{timestamp}-{random}
+  defaultSize: { width: 40, height: 30 };
+  icon: 'circle';
+}
+```
+
 ### 食材アイコン・名前表示機能の実装洞察
 
 #### IngredientServiceの設計パターン
