@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { BentoBoxCanvas } from '@/components/BentoBoxCanvas';
 import { IngredientList } from '@/components/IngredientList';
@@ -12,7 +12,10 @@ import { SuggestionType, SuggestionResult } from '@/services/suggestionService';
 import { IngredientService } from '@/services/ingredientService';
 import { DropInfo } from '@/components/BentoBoxCanvas/BentoBoxCanvas';
 import { PlacedIngredientService } from '@/services/placedIngredientService';
+import { useDragState } from '@/hooks/useDragState';
 import { DragPosition } from '@/components/IngredientList/IngredientItem/IngredientItem';
+import { DRAG_DROP_ERRORS } from '@/constants/dragDrop';
+import { validateDrop } from '@/utils/dragDropValidation';
 import { UI_COLORS } from '@/utils/colors';
 import { BENTO_DESIGNER_CONFIG } from '@/constants/bentoDesigner';
 
@@ -27,10 +30,18 @@ export function BentoDesigner(props: BentoDesignerProps) {
   const [ingredients, setIngredients] = useState<Ingredient[]>(getInitialIngredients());
   
   // Drag state management
-  const [draggedIngredient, setDraggedIngredient] = useState<Ingredient | undefined>(undefined);
-  const [dragPosition, setDragPosition] = useState<DragPosition | undefined>(undefined);
+  const {
+    draggedIngredient,
+    dragPosition,
+    startDrag,
+    updateDragPosition,
+    endDrag
+  } = useDragState();
   
-  const bentoBox = createBentoBox(BENTO_DESIGNER_CONFIG.DEFAULT_BENTO_BOX);
+  const bentoBox = useMemo(
+    () => createBentoBox(BENTO_DESIGNER_CONFIG.DEFAULT_BENTO_BOX),
+    []
+  );
 
   // Load user ingredients and placed ingredients on component mount
   useEffect(() => {
@@ -45,7 +56,7 @@ export function BentoDesigner(props: BentoDesignerProps) {
         const savedPlacedIngredients = await PlacedIngredientService.loadFromStorage();
         setPlacedIngredients(savedPlacedIngredients);
       } catch (error) {
-        console.error('Failed to load data:', error);
+        console.error(DRAG_DROP_ERRORS.STORAGE_LOAD_FAILED, error);
         // Fallback to initial ingredients if loading fails
         setIngredients(getInitialIngredients());
         setPlacedIngredients([]);
@@ -64,7 +75,7 @@ export function BentoDesigner(props: BentoDesignerProps) {
       setPlacedIngredients([]);
       await PlacedIngredientService.saveToStorage([]);
     } catch (error) {
-      console.error('Failed to clear placed ingredients:', error);
+      console.error(DRAG_DROP_ERRORS.CLEAR_FAILED, error);
     }
   };
 
@@ -100,11 +111,11 @@ export function BentoDesigner(props: BentoDesignerProps) {
 
   // Drag handlers
   const handleDragStart = (ingredient: Ingredient) => {
-    setDraggedIngredient(ingredient);
+    startDrag(ingredient);
   };
 
   const handleDragEnd = (ingredient: Ingredient, position: DragPosition) => {
-    setDragPosition(position);
+    updateDragPosition(position);
     // Note: actual drop handling is done in BentoBoxCanvas handleDrop
   };
 
@@ -119,6 +130,20 @@ export function BentoDesigner(props: BentoDesignerProps) {
 
   const handleIngredientDrop = async (ingredient: Ingredient, dropInfo: DropInfo) => {
     try {
+      // Validate drop operation
+      const validation = validateDrop(
+        ingredient,
+        dropInfo,
+        placedIngredients,
+        bentoBox.partitions
+      );
+      
+      if (!validation.isValid) {
+        console.warn('Drop validation failed:', validation.error);
+        endDrag();
+        return;
+      }
+      
       // Create placed ingredient
       const placedIngredient = PlacedIngredientService.createPlacedIngredient({
         ingredientId: ingredient.id,
@@ -138,13 +163,11 @@ export function BentoDesigner(props: BentoDesignerProps) {
       await PlacedIngredientService.saveToStorage(updatedPlacedIngredients);
       
       // Clear drag state
-      setDraggedIngredient(undefined);
-      setDragPosition(undefined);
+      endDrag();
     } catch (error) {
-      console.error('Failed to place ingredient:', error);
+      console.error(DRAG_DROP_ERRORS.PLACEMENT_FAILED, error);
       // Clear drag state even on error
-      setDraggedIngredient(undefined);
-      setDragPosition(undefined);
+      endDrag();
     }
   };
 
