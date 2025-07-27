@@ -2,6 +2,12 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ingredient } from '@/types';
 import { UI_COLORS } from '@/utils/colors';
+import {
+  ADD_INGREDIENT_FORM_DEFAULTS,
+  INGREDIENT_CATEGORIES,
+  INGREDIENT_COLORS,
+  ADD_INGREDIENT_MODAL_CONFIG,
+} from '@/constants/addIngredientModal';
 
 export interface AddIngredientModalProps {
   visible: boolean;
@@ -11,13 +17,13 @@ export interface AddIngredientModalProps {
 
 export function AddIngredientModal({ visible, onSave, onCancel }: AddIngredientModalProps) {
   const [name, setName] = useState('');
-  const [category, setCategory] = useState<Ingredient['category']>('other');
-  const [color, setColor] = useState<Ingredient['color']>('white');
-  const [vitamin, setVitamin] = useState('50');
-  const [protein, setProtein] = useState('50');
-  const [fiber, setFiber] = useState('50');
-  const [cost, setCost] = useState('100');
-  const [cookingTime, setCookingTime] = useState('5');
+  const [category, setCategory] = useState<Ingredient['category']>(ADD_INGREDIENT_FORM_DEFAULTS.CATEGORY);
+  const [color, setColor] = useState<Ingredient['color']>(ADD_INGREDIENT_FORM_DEFAULTS.COLOR);
+  const [vitamin, setVitamin] = useState(ADD_INGREDIENT_FORM_DEFAULTS.NUTRITION.VITAMIN.toString());
+  const [protein, setProtein] = useState(ADD_INGREDIENT_FORM_DEFAULTS.NUTRITION.PROTEIN.toString());
+  const [fiber, setFiber] = useState(ADD_INGREDIENT_FORM_DEFAULTS.NUTRITION.FIBER.toString());
+  const [cost, setCost] = useState(ADD_INGREDIENT_FORM_DEFAULTS.COST.toString());
+  const [cookingTime, setCookingTime] = useState(ADD_INGREDIENT_FORM_DEFAULTS.COOKING_TIME.toString());
 
   const handleSave = () => {
     const ingredientData = {
@@ -29,11 +35,11 @@ export function AddIngredientModal({ visible, onSave, onCancel }: AddIngredientM
         protein: parseInt(protein) || 0,
         fiber: parseInt(fiber) || 0,
       },
-      cost: parseInt(cost) || 0,
-      cookingTime: parseInt(cookingTime) || 0,
-      season: 'all' as const,
-      isFrozen: false,
-      isReadyToEat: true,
+      cost: parseInt(cost) || ADD_INGREDIENT_FORM_DEFAULTS.COST,
+      cookingTime: parseInt(cookingTime) || ADD_INGREDIENT_FORM_DEFAULTS.COOKING_TIME,
+      season: ADD_INGREDIENT_FORM_DEFAULTS.SEASON,
+      isFrozen: ADD_INGREDIENT_FORM_DEFAULTS.IS_FROZEN,
+      isReadyToEat: ADD_INGREDIENT_FORM_DEFAULTS.IS_READY_TO_EAT,
     };
     onSave(ingredientData);
   };
@@ -62,14 +68,14 @@ export function AddIngredientModal({ visible, onSave, onCancel }: AddIngredientM
             
             <Text style={styles.label}>カテゴリ</Text>
             <View style={styles.selectorContainer} testID="category-selector">
-              {(['main', 'side', 'vegetable', 'fruit', 'other'] as const).map((cat) => (
+              {INGREDIENT_CATEGORIES.map((catItem) => (
                 <TouchableOpacity
-                  key={cat}
-                  style={[styles.selectorButton, category === cat && styles.selectorButtonSelected]}
-                  onPress={() => setCategory(cat)}
+                  key={catItem.value}
+                  style={[styles.selectorButton, category === catItem.value && styles.selectorButtonSelected]}
+                  onPress={() => setCategory(catItem.value)}
                 >
-                  <Text style={[styles.selectorText, category === cat && styles.selectorTextSelected]}>
-                    {getCategoryLabel(cat)}
+                  <Text style={[styles.selectorText, category === catItem.value && styles.selectorTextSelected]}>
+                    {catItem.label}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -77,13 +83,13 @@ export function AddIngredientModal({ visible, onSave, onCancel }: AddIngredientM
             
             <Text style={styles.label}>色</Text>
             <View style={styles.selectorContainer} testID="color-selector">
-              {(['red', 'yellow', 'green', 'white', 'brown', 'black'] as const).map((col) => (
+              {INGREDIENT_COLORS.map((colorItem) => (
                 <TouchableOpacity
-                  key={col}
-                  style={[styles.colorButton, { backgroundColor: getColorValue(col) }, color === col && styles.colorButtonSelected]}
-                  onPress={() => setColor(col)}
+                  key={colorItem.value}
+                  style={[styles.colorButton, { backgroundColor: colorItem.hex }, color === colorItem.value && styles.colorButtonSelected]}
+                  onPress={() => setColor(colorItem.value)}
                 >
-                  <Text style={styles.colorText}>{getColorLabel(col)}</Text>
+                  <Text style={styles.colorText}>{colorItem.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -165,41 +171,6 @@ export function AddIngredientModal({ visible, onSave, onCancel }: AddIngredientM
   );
 }
 
-function getCategoryLabel(category: Ingredient['category']): string {
-  const labels = {
-    main: 'メイン',
-    side: 'サイド',
-    vegetable: '野菜',
-    fruit: '果物',
-    other: 'その他'
-  };
-  return labels[category];
-}
-
-function getColorLabel(color: Ingredient['color']): string {
-  const labels = {
-    red: '赤',
-    yellow: '黄',
-    green: '緑',
-    white: '白',
-    brown: '茶',
-    black: '黒'
-  };
-  return labels[color];
-}
-
-function getColorValue(color: Ingredient['color']): string {
-  const colors = {
-    red: '#FF6B6B',
-    yellow: '#FFD93D',
-    green: '#6BCF7F',
-    white: '#FFFFFF',
-    brown: '#D2691E',
-    black: '#2C2C2C'
-  };
-  return colors[color];
-}
-
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
@@ -210,16 +181,16 @@ const styles = StyleSheet.create({
   },
   modal: {
     backgroundColor: UI_COLORS.background.modal,
-    borderRadius: 16,
+    borderRadius: ADD_INGREDIENT_MODAL_CONFIG.MODAL.BORDER_RADIUS,
     width: '100%',
-    maxWidth: 400,
-    maxHeight: '90%',
+    maxWidth: ADD_INGREDIENT_MODAL_CONFIG.MODAL.MAX_WIDTH,
+    maxHeight: ADD_INGREDIENT_MODAL_CONFIG.MODAL.MAX_HEIGHT_PERCENT,
   },
   scrollContent: {
-    padding: 24,
+    padding: ADD_INGREDIENT_MODAL_CONFIG.ACTION.PADDING,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: ADD_INGREDIENT_MODAL_CONFIG.SECTION.MARGIN_BOTTOM,
   },
   sectionTitle: {
     fontSize: 18,
@@ -236,22 +207,22 @@ const styles = StyleSheet.create({
   textInput: {
     borderWidth: 1,
     borderColor: UI_COLORS.border.light,
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: ADD_INGREDIENT_MODAL_CONFIG.INPUT.BORDER_RADIUS,
+    padding: ADD_INGREDIENT_MODAL_CONFIG.INPUT.PADDING,
     fontSize: 16,
-    marginBottom: 16,
+    marginBottom: ADD_INGREDIENT_MODAL_CONFIG.INPUT.MARGIN_BOTTOM,
     backgroundColor: UI_COLORS.background.modal,
   },
   selectorContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginBottom: 16,
+    marginBottom: ADD_INGREDIENT_MODAL_CONFIG.INPUT.MARGIN_BOTTOM,
   },
   selectorButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: ADD_INGREDIENT_MODAL_CONFIG.SELECTOR.BUTTON.PADDING_HORIZONTAL,
+    paddingVertical: ADD_INGREDIENT_MODAL_CONFIG.SELECTOR.BUTTON.PADDING_VERTICAL,
+    borderRadius: ADD_INGREDIENT_MODAL_CONFIG.SELECTOR.BUTTON.BORDER_RADIUS,
     borderWidth: 1,
     borderColor: UI_COLORS.border.light,
     backgroundColor: UI_COLORS.background.modal,
@@ -269,17 +240,17 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   colorButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 2,
+    paddingHorizontal: ADD_INGREDIENT_MODAL_CONFIG.SELECTOR.BUTTON.PADDING_HORIZONTAL,
+    paddingVertical: ADD_INGREDIENT_MODAL_CONFIG.SELECTOR.BUTTON.PADDING_VERTICAL,
+    borderRadius: ADD_INGREDIENT_MODAL_CONFIG.SELECTOR.BUTTON.BORDER_RADIUS,
+    borderWidth: ADD_INGREDIENT_MODAL_CONFIG.SELECTOR.COLOR_BUTTON.BORDER_WIDTH_NORMAL,
     borderColor: 'transparent',
-    minWidth: 50,
+    minWidth: ADD_INGREDIENT_MODAL_CONFIG.SELECTOR.COLOR_BUTTON.MIN_WIDTH,
     alignItems: 'center',
   },
   colorButtonSelected: {
     borderColor: UI_COLORS.primary,
-    borderWidth: 3,
+    borderWidth: ADD_INGREDIENT_MODAL_CONFIG.SELECTOR.COLOR_BUTTON.BORDER_WIDTH_SELECTED,
   },
   colorText: {
     fontSize: 12,
@@ -292,14 +263,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 12,
-    padding: 24,
+    padding: ADD_INGREDIENT_MODAL_CONFIG.ACTION.PADDING,
     borderTopWidth: 1,
     borderTopColor: UI_COLORS.border.light,
   },
   actionButton: {
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingVertical: ADD_INGREDIENT_MODAL_CONFIG.ACTION.BUTTON.PADDING_VERTICAL,
+    borderRadius: ADD_INGREDIENT_MODAL_CONFIG.ACTION.BUTTON.BORDER_RADIUS,
     alignItems: 'center',
   },
   saveButton: {
