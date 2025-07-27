@@ -1041,6 +1041,111 @@ side: {
 - **メモリ使用量**: 色設定オブジェクトの効率的な管理
 - **型チェック**: コンパイル時の厳密な検証による実行時エラー削減
 
+### 提案アルゴリズム（栄養バランス重視）の実装洞察
+
+#### 拡張可能な設計パターンの確立
+```typescript
+// 設定値の外部化によるアルゴリズムパラメータ管理
+const SUGGESTION_CONFIG = {
+  NUTRITION: {
+    IDEAL_VALUE: 100,           // 栄養素ごとの理想値
+    THRESHOLDS: {
+      HIGH: 150,                // 高栄養閾値
+      BALANCED: 100,            // バランス栄養閾値  
+      MODERATE: 50              // 中程度栄養閾値
+    }
+  },
+  SPEED: {
+    FROZEN_BONUS: 50,          // 冷凍食品ボーナス
+    READY_BONUS: 50            // そのまま使用ボーナス
+  }
+} as const;
+```
+
+#### 型安全性を重視した設計
+```typescript
+// 明確な型定義による将来の拡張対応
+export type SuggestionType = 'speed' | 'nutrition';
+
+// 新しい評価軸追加時の統一パターン
+const scoreCalculators = {
+  speed: (ingredient: Ingredient) => this.calculateSpeedScore(ingredient),
+  nutrition: (ingredient: Ingredient) => this.calculateNutritionScore([ingredient])
+  // 将来追加: color, season, cost
+};
+```
+
+#### コード重複の効果的な解消
+```typescript
+// 以前のif-else分岐による重複コード
+// 280行 → 140行に大幅削減、保守性向上
+
+// Strategy Pattern採用による拡張性確保
+static getSuggestionsWithScores(ingredients, type: SuggestionType) {
+  const scoreCalculator = scoreCalculators[type];
+  const reasonGenerator = reasonGenerators[type];
+  
+  return ingredients.map(ingredient => ({
+    ingredient,
+    score: scoreCalculator(ingredient),
+    reason: reasonGenerator(ingredient)
+  })).sort((a, b) => b.score - a.score);
+}
+```
+
+#### 栄養バランス計算アルゴリズムの設計
+```typescript
+// 各栄養素が理想値（100）に近いほど高スコア
+// 栄養素過多・不足の両方にペナルティを適用
+
+calculateNutritionScore(ingredients) {
+  // 栄養素合計値計算
+  const totalNutrition = ingredients.reduce((total, ingredient) => ({
+    vitamin: total.vitamin + ingredient.nutrition.vitamin,
+    protein: total.protein + ingredient.nutrition.protein,
+    fiber: total.fiber + ingredient.nutrition.fiber
+  }), { vitamin: 0, protein: 0, fiber: 0 });
+
+  // 理想値からの乖離をペナルティとして計算
+  const vitaminScore = 100 - Math.abs(totalNutrition.vitamin - IDEAL_VALUE);
+  const proteinScore = 100 - Math.abs(totalNutrition.protein - IDEAL_VALUE);
+  const fiberScore = 100 - Math.abs(totalNutrition.fiber - IDEAL_VALUE);
+
+  return (vitaminScore + proteinScore + fiberScore) / 3;
+}
+```
+
+#### TDD実装の成果
+- **16個の包括的テストケース**: 栄養バランス計算、個別食材評価、統合機能すべて検証
+- **型安全性の確保**: SuggestionType型による実行時エラー防止
+- **下位互換性の維持**: 既存のspeed関連機能への影響なし
+- **拡張性の証明**: 新しい評価軸追加のパターン確立
+
+#### アーキテクチャ上の利点
+1. **単一責任原則**: 各評価軸のロジックが独立して動作
+2. **開放閉鎖原則**: 新しい評価軸追加時に既存コードを修正不要
+3. **戦略パターン**: アルゴリズム選択の柔軟性確保
+4. **設定外部化**: ビジネスルール変更への迅速対応
+
+#### パフォーマンス最適化
+```typescript
+// O(n)の線形時間計算: 食材数に対して効率的
+// メモリ効率: 不変オブジェクトによる予測可能な状態管理
+// 計算最適化: 段階的計算による不要な処理回避
+```
+
+#### 今後の拡張予定
+- **複数評価軸の組み合わせ**: 重み付きスコア計算
+- **動的閾値調整**: ユーザーの好みに応じた基準値変更
+- **栄養素拡張**: カルシウム、鉄分等の追加栄養素対応
+- **季節・年代別推奨値**: より個別化された栄養バランス提案
+
+#### 学習ポイント
+1. **設定ファーストアプローチ**: ビジネスロジックと設定値の明確な分離
+2. **型安全性の実践的価値**: コンパイル時エラー検出による開発効率向上
+3. **テストファーストの威力**: 複雑なアルゴリズムでも安心してリファクタリング可能
+4. **パターンの力**: 統一されたパターンによる将来拡張の容易化
+
 ## 今後の拡張ポイント
 1. 仕切りの自由配置
 2. お弁当箱形状の追加
