@@ -29,7 +29,7 @@ describe('BentoDesigner Main Screen Integration', () => {
       );
       
       // お弁当箱表示エリア（上部）
-      expect(getByTestId('bento-box-container')).toBeTruthy();
+      expect(getByTestId('bento-container')).toBeTruthy();
       
       // 食材リスト（中部）
       expect(getByTestId('ingredient-list')).toBeTruthy();
@@ -118,7 +118,7 @@ describe('BentoDesigner Main Screen Integration', () => {
       fireEvent.press(clearButton);
       
       // クリア後の状態確認は実装で定義
-      expect(getByTestId('bento-box-container')).toBeTruthy();
+      expect(getByTestId('bento-container')).toBeTruthy();
     });
   });
 });

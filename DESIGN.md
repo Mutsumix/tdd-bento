@@ -1557,6 +1557,166 @@ if (!visible) {
 3. **外部化の威力**: 定数とスタイルの分離による変更容易性
 4. **テスト駆動の安心感**: 大規模リファクタリングでも既存機能の非破綻性保証
 
+### メイン画面統合（BentoDesigner + ActionBar）の実装洞察
+
+#### 統合アーキテクチャの設計
+```typescript
+// メイン画面の3層構造による明確な役割分離
+BentoDesigner
+├── BentoBoxCanvas    // お弁当箱表示エリア（上部）
+├── IngredientList    // 食材選択リスト（中部）  
+└── ActionBar         // 操作ボタン（下部）
+    └── SuggestionModal  // 提案モーダル（オーバーレイ）
+
+// レイアウト構成
+flex: 1 container
+├── flex: 2 bentoContainer    // お弁当箱エリア（2/4比率）
+├── flex: 1 ingredientContainer // 食材リストエリア（1/4比率）
+└── ActionBar (固定高さ)      // アクションバー
+```
+
+#### 設定外部化による保守性向上
+```typescript
+// src/constants/bentoDesigner.ts
+export const BENTO_DESIGNER_CONFIG = {
+  DEFAULT_BENTO_BOX: {
+    type: 'rectangle' as const,
+    dimensions: { width: 300, height: 200 }
+  },
+  LAYOUT: {
+    CONTAINER_PADDING: 16,
+    BENTO_FLEX: 2,           // お弁当箱エリアの比率
+    INGREDIENT_FLEX: 1,       // 食材リストエリアの比率
+    BORDER_WIDTH: 1
+  }
+} as const;
+
+// src/constants/actionBar.ts  
+export const ACTION_BAR_CONFIG = {
+  LAYOUT: {
+    PADDING_HORIZONTAL: 20,
+    PADDING_VERTICAL: 16,
+    BORDER_WIDTH: 1,
+  },
+  BUTTON: {
+    PADDING_VERTICAL: 12,
+    MARGIN_HORIZONTAL: 8,
+    BORDER_RADIUS: 8,
+  },
+  TEXT: {
+    FONT_SIZE: 16,
+    FONT_WEIGHT: 'bold' as const,
+  },
+  BUTTON_TEXT: {
+    SUGGESTION: '提案を受ける',
+    CLEAR: 'クリア',
+  }
+} as const;
+```
+
+#### 状態管理とイベントフロー
+```typescript
+// BentoDesignerの状態管理
+const [placedIngredients, setPlacedIngredients] = useState<PlacedIngredient[]>([]);
+const [isModalVisible, setIsModalVisible] = useState(false);
+
+// イベントハンドリングの統合
+const closeModal = () => setIsModalVisible(false);           // 重複除去
+const handleSuggestion = () => setIsModalVisible(true);      // 提案ボタン
+const handleClear = () => setPlacedIngredients([]);          // クリアボタン
+const handleIngredientDrop = (ingredient, dropInfo) => {...}; // ドロップ処理
+
+// プロパティドリリングによるコンポーネント間通信
+<ActionBar
+  onSuggestion={handleSuggestion}
+  onClear={handleClear}
+  hasPlacedIngredients={hasPlacedIngredients}
+/>
+<SuggestionModal
+  visible={isModalVisible}
+  ingredients={ingredients}
+  onAdopt={handleSuggestionAdopt}
+  onNext={handleSuggestionNext}
+  onCancel={closeModal}
+/>
+```
+
+#### TestID管理による統合テスト
+```typescript
+// testIDの階層的命名による重複回避
+BentoDesigner: testID="bento-designer"
+├── Container: testID="bento-container"        // BentoDesigner内のコンテナ
+│   └── BentoBoxCanvas: testID="bento-box-container" // 既存のtestID維持
+├── IngredientList: testID="ingredient-list"   // ScrollView内のtestID
+└── ActionBar: testID="action-bar"
+    ├── Suggestion: testID="action-suggestion"
+    └── Clear: testID="action-clear"
+```
+
+#### TDD実装の成果
+- **19個の統合テストケース**: ActionBar(9) + BentoDesigner(10)の完全なテスト網羅
+- **コンポーネント統合**: 既存コンポーネントの組み合わせによる新機能構築
+- **状態管理テスト**: モーダル表示・非表示の適切な制御確認
+- **ユーザーワークフロー**: 提案→採用→クリアの完全な操作フロー検証
+
+#### リファクタリングによる品質向上
+```typescript
+// Before: ハードコーディングされた値とコード重複
+const bentoBox = createBentoBox({
+  type: 'rectangle',
+  dimensions: { width: 300, height: 200 }
+});
+const handleModalClose = () => setIsModalVisible(false);
+const handleSuggestionCancel = () => setIsModalVisible(false);
+  
+// After: 設定外部化と重複除去
+const bentoBox = createBentoBox(BENTO_DESIGNER_CONFIG.DEFAULT_BENTO_BOX);
+const closeModal = () => setIsModalVisible(false);
+// handleModalClose と handleSuggestionCancel を closeModal に統一
+```
+
+#### コンポーネント責任分離
+```typescript
+// 各コンポーネントの明確な責任
+BentoDesigner:     状態管理とコンポーネント統合
+BentoBoxCanvas:    お弁当箱の描画とドラッグ&ドロップ処理  
+IngredientList:    食材リストの表示とスクロール
+ActionBar:         操作ボタンとその状態制御
+SuggestionModal:   提案表示と評価軸選択
+```
+
+#### アーキテクチャ上の利点
+1. **レイヤー分離**: プレゼンテーション層内での明確な役割分担
+2. **設定駆動**: 外部定数によるレイアウト調整の容易性
+3. **型安全性**: TypeScriptによる統合時の型チェック
+4. **拡張性**: 新しい操作ボタンやモーダルの追加が容易
+
+#### パフォーマンス特性
+```typescript
+// 効率的な条件付きレンダリング
+{isModalVisible && <SuggestionModal ... />}  // モーダル非表示時はDOM非生成
+
+// 計算派生値による最適化
+const hasPlacedIngredients = placedIngredients.length > 0;  // 一度だけ計算
+
+// メモ化の余地
+const ingredients = useMemo(() => getInitialIngredients(), []);  // 将来的な最適化
+const bentoBox = useMemo(() => createBentoBox(...), []);
+```
+
+#### 今後の拡張可能性
+- **カスタムレイアウト**: ユーザー設定によるエリア比率調整
+- **テーマシステム**: ダークモード対応とカスタムカラーテーマ
+- **保存・復元**: お弁当箱配置状態の永続化
+- **プレビュー機能**: 実際のお弁当写真生成
+- **共有機能**: SNSへのお弁当レイアウト共有
+
+#### 学習ポイント
+1. **段階的統合**: 既存コンポーネントの組み合わせによる効率的な新機能構築
+2. **設定の重要性**: 外部化による将来の仕様変更への柔軟対応
+3. **testIDの体系化**: 階層的命名による統合テストの安定性確保  
+4. **リファクタリングの価値**: 品質向上と保守性改善の両立
+
 ## 今後の拡張ポイント
 1. 仕切りの自由配置
 2. お弁当箱形状の追加

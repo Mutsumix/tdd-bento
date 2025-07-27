@@ -1,12 +1,14 @@
 # TODO リスト
 
 ## In Progress
-- [🔴 RED] メイン画面の統合とスタイリング - 失敗テスト作成中
-  - Started: 2025-01-27 20:45
-  - Goal: BentoDesignerとActionBarの実装、既存コンポーネントの統合、完全なユーザーワークフロー
+- [🔴 RED] AddIngredientModalの基本UI実装 - 失敗テスト作成中
+  - Started: 2025-01-27 21:40
+  - Goal: モーダル表示、入力フォーム、保存・キャンセルボタンの基本UIを完成
 
 ## Next
-- [ ] 食材追加機能の実装
+- [ ] 食材データの入力検証とstate管理
+- [ ] 新食材の保存とリスト更新機能
+- [ ] 食材追加ボタンの統合（BentoDesigner）
 
 ## Done
 - [✅] Expo プロジェクトの初期セットアップ (2025-01-26 14:48)
@@ -55,3 +57,6 @@
 - [✅] SuggestionModalの実装 (2025-01-27 16:10)
   - Red/Green/Refactor/Feedback 全段階完了
   - 成果: 5評価軸対応UI実装、統合色管理システム、定数外部化、15テスト全合格、リファクタリング品質向上
+- [✅] メイン画面の統合とスタイリング (2025-01-27 21:35)
+  - Red/Green/Refactor/Feedback 全段階完了
+  - 成果: BentoDesigner・ActionBar統合実装、19テスト全合格、設定外部化、統合アーキテクチャ確立
