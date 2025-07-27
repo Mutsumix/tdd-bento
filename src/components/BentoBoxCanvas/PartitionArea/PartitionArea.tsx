@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { Partition } from '@/types';
+import { getPartitionColors } from '@/utils/partitionStyles';
 
 export interface PartitionAreaProps {
   partition: Partition;
@@ -8,12 +9,16 @@ export interface PartitionAreaProps {
 }
 
 export function PartitionArea({ partition, onDrop }: PartitionAreaProps) {
+  const partitionColors = getPartitionColors(partition.type);
+  
   const dynamicStyle: ViewStyle = {
     position: 'absolute',
     left: partition.bounds.x,
     top: partition.bounds.y,
     width: partition.bounds.width,
-    height: partition.bounds.height
+    height: partition.bounds.height,
+    backgroundColor: partitionColors.backgroundColor,
+    borderColor: partitionColors.borderColor
   };
 
   const handleDrop = (event: any) => {
@@ -38,7 +43,6 @@ export function PartitionArea({ partition, onDrop }: PartitionAreaProps) {
 const styles = StyleSheet.create({
   partition: {
     borderWidth: 1,
-    borderColor: '#999',
     borderStyle: 'dashed'
   }
 });
