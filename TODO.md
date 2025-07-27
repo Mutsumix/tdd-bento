@@ -1,9 +1,11 @@
 # TODO リスト
 
 ## In Progress
+- [🔴 RED] SuggestionModalの実装 - 失敗テスト作成中
+  - Started: 2025-01-27 15:30
+  - Goal: 評価軸選択、提案表示、アクションボタンを持つ完全機能のSuggestionModal
 
 ## Next
-- [ ] SuggestionModalの実装
 - [ ] 食材追加機能の実装
 - [ ] メイン画面の統合とスタイリング
 
