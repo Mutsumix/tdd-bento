@@ -404,4 +404,109 @@ describe('SuggestionService', () => {
       expect(SuggestionService.getCurrentSeason(new Date('2024-12-15'))).toBe('winter'); // December
     });
   });
+
+  describe('calculateCostScore', () => {
+    it('should calculate cost score for low-cost ingredient', () => {
+      // Mock ingredient with cost: 200
+      const lowCostIngredient: Ingredient = {
+        ...mockIngredients[0],
+        cost: 200
+      };
+      
+      const score = SuggestionService.calculateCostScore(lowCostIngredient);
+      // Expected: 1000 - 200 = 800
+      expect(score).toBe(800);
+    });
+
+    it('should calculate cost score for high-cost ingredient', () => {
+      // Mock ingredient with cost: 800  
+      const highCostIngredient: Ingredient = {
+        ...mockIngredients[1],
+        cost: 800
+      };
+      
+      const score = SuggestionService.calculateCostScore(highCostIngredient);
+      // Expected: 1000 - 800 = 200
+      expect(score).toBe(200);
+    });
+
+    it('should handle zero cost ingredient', () => {
+      const freeCostIngredient: Ingredient = {
+        ...mockIngredients[2],
+        cost: 0
+      };
+      
+      const score = SuggestionService.calculateCostScore(freeCostIngredient);
+      // Expected: 1000 - 0 = 1000
+      expect(score).toBe(1000);
+    });
+
+    it('should handle cost higher than base value', () => {
+      const expensiveIngredient: Ingredient = {
+        ...mockIngredients[3],
+        cost: 1200
+      };
+      
+      const score = SuggestionService.calculateCostScore(expensiveIngredient);
+      // Expected: 1000 - 1200 = -200 (negative score allowed)
+      expect(score).toBe(-200);
+    });
+  });
+
+  describe('getSuggestionsForCost', () => {
+    const costTestIngredients: Ingredient[] = [
+      { ...mockIngredients[0], cost: 300 }, // score: 700
+      { ...mockIngredients[1], cost: 100 }, // score: 900
+      { ...mockIngredients[2], cost: 500 }, // score: 500
+      { ...mockIngredients[3], cost: 50 }   // score: 950
+    ];
+
+    it('should return ingredients sorted by cost score (highest first)', () => {
+      const suggestions = SuggestionService.getSuggestionsForCost(costTestIngredients);
+      
+      expect(suggestions).toHaveLength(4);
+      // Order: cost 50 (950pts), cost 100 (900pts), cost 300 (700pts), cost 500 (500pts)
+      expect(suggestions[0].cost).toBe(50);   // Highest score (950)
+      expect(suggestions[1].cost).toBe(100);  // Second highest (900)
+      expect(suggestions[2].cost).toBe(300);  // Third (700)
+      expect(suggestions[3].cost).toBe(500);  // Lowest score (500)
+    });
+
+    it('should limit results when count is specified', () => {
+      const suggestions = SuggestionService.getSuggestionsForCost(costTestIngredients, 2);
+      
+      expect(suggestions).toHaveLength(2);
+      expect(suggestions[0].cost).toBe(50);   // Highest score
+      expect(suggestions[1].cost).toBe(100);  // Second highest
+    });
+
+    it('should return empty array for empty ingredients list', () => {
+      const suggestions = SuggestionService.getSuggestionsForCost([]);
+      expect(suggestions).toEqual([]);
+    });
+  });
+
+  describe('getSuggestionsWithScores - cost type', () => {
+    it('should return ingredients with their calculated cost scores', () => {
+      const costTestIngredients: Ingredient[] = [
+        { ...mockIngredients[0], cost: 200 }, // score: 800
+        { ...mockIngredients[1], cost: 400 }, // score: 600
+        { ...mockIngredients[2], cost: 100 }  // score: 900
+      ];
+      
+      const results = SuggestionService.getSuggestionsWithScores(costTestIngredients, 'cost');
+      
+      expect(results).toHaveLength(3);
+      expect(results[0]).toHaveProperty('ingredient');
+      expect(results[0]).toHaveProperty('score');
+      expect(results[0]).toHaveProperty('reason');
+      expect(typeof results[0].score).toBe('number');
+      expect(typeof results[0].reason).toBe('string');
+      
+      // Should be sorted by score (highest first)
+      expect(results[0].score).toBe(900); // cost: 100
+      expect(results[1].score).toBe(800); // cost: 200
+      expect(results[2].score).toBe(600); // cost: 400
+    });
+  });
 });
