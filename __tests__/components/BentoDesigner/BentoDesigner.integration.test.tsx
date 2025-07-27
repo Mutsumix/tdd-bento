@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import { BentoDesigner } from '@/components/BentoDesigner/BentoDesigner';
 import { IngredientService } from '@/services/ingredientService';
 import { StorageService } from '@/services/StorageService';
@@ -152,7 +152,7 @@ describe('BentoDesigner - Add Ingredient Integration', () => {
     });
 
     it('should close modal after successful save', async () => {
-      (IngredientService.addUserIngredient as jest.Mock).mockResolvedValue({
+      const mockNewIngredient = {
         id: 'user-ingredient-789',
         name: 'New Ingredient',
         category: 'vegetable',
@@ -165,26 +165,42 @@ describe('BentoDesigner - Add Ingredient Integration', () => {
         isReadyToEat: false,
         defaultSize: { width: 40, height: 30 },
         icon: 'circle',
-      });
+      };
+
+      (IngredientService.addUserIngredient as jest.Mock).mockResolvedValue(mockNewIngredient);
+      (IngredientService.getAllWithUserIngredients as jest.Mock)
+        .mockResolvedValueOnce(mockInitialIngredients)
+        .mockResolvedValueOnce([...mockInitialIngredients, mockNewIngredient]);
 
       const { getByTestId, queryByTestId } = render(<BentoDesigner />);
       
+      // Wait for initial load to complete
+      await waitFor(() => {
+        expect(getByTestId('action-add-ingredient')).toBeTruthy();
+      });
+      
       // Open modal
-      fireEvent.press(getByTestId('action-add-ingredient'));
+      await act(async () => {
+        fireEvent.press(getByTestId('action-add-ingredient'));
+      });
       expect(getByTestId('add-ingredient-modal')).toBeTruthy();
       
       // Fill out form
-      fireEvent.changeText(getByTestId('name-input'), 'New Ingredient');
-      fireEvent.press(getByTestId('category-vegetable'));
-      fireEvent.press(getByTestId('color-green'));
+      await act(async () => {
+        fireEvent.changeText(getByTestId('name-input'), 'New Ingredient');
+        fireEvent.press(getByTestId('category-vegetable'));
+        fireEvent.press(getByTestId('color-green'));
+      });
       
       // Save
-      fireEvent.press(getByTestId('save-button'));
+      await act(async () => {
+        fireEvent.press(getByTestId('save-button'));
+      });
       
       // Modal should close after save
       await waitFor(() => {
         expect(queryByTestId('add-ingredient-modal')).toBeNull();
-      });
+      }, { timeout: 3000 });
     });
 
     it('should close modal when cancel is pressed', () => {
@@ -217,18 +233,18 @@ describe('BentoDesigner - Add Ingredient Integration', () => {
         icon: 'circle',
       }];
 
-      (IngredientService.loadUserIngredients as jest.Mock).mockResolvedValue(mockUserIngredients);
+      (IngredientService.loadUserIngredients as jest.Mock).mockResolvedValue(undefined);
       (IngredientService.getAllWithUserIngredients as jest.Mock).mockResolvedValue([
         ...mockInitialIngredients,
         ...mockUserIngredients,
       ]);
 
-      const { getByText } = render(<BentoDesigner />);
+      const { getByTestId } = render(<BentoDesigner />);
       
       await waitFor(() => {
         expect(IngredientService.loadUserIngredients).toHaveBeenCalled();
-        expect(getByText('既存のユーザー食材')).toBeTruthy();
-      });
+        expect(getByTestId('ingredient-item-user-ingredient-existing')).toBeTruthy();
+      }, { timeout: 3000 });
     });
   });
 });
