@@ -1,11 +1,13 @@
 import React from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { Ingredient } from '@/types';
-import { IngredientItem } from './IngredientItem';
+import { IngredientItem, DragPosition } from './IngredientItem/IngredientItem';
 
 export interface IngredientListProps {
   ingredients: Ingredient[];
   onIngredientPress?: (ingredient: Ingredient) => void;
+  onDragStart?: (ingredient: Ingredient) => void;
+  onDragEnd?: (ingredient: Ingredient, position: DragPosition) => void;
   // Note: Category filtering will be added in future iterations
   // selectedCategory?: string;
   // onCategoryChange?: (category: string) => void;
@@ -13,7 +15,9 @@ export interface IngredientListProps {
 
 export function IngredientList({ 
   ingredients,
-  onIngredientPress 
+  onIngredientPress,
+  onDragStart,
+  onDragEnd
 }: IngredientListProps) {
   return (
     <ScrollView
@@ -28,6 +32,8 @@ export function IngredientList({
           key={ingredient.id}
           ingredient={ingredient}
           onPress={onIngredientPress}
+          onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
         />
       ))}
     </ScrollView>

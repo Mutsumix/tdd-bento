@@ -11,6 +11,8 @@ import { PlacedIngredient, Ingredient } from '@/types';
 import { SuggestionType, SuggestionResult } from '@/services/suggestionService';
 import { IngredientService } from '@/services/ingredientService';
 import { DropInfo } from '@/components/BentoBoxCanvas/BentoBoxCanvas';
+import { PlacedIngredientService } from '@/services/placedIngredientService';
+import { DragPosition } from '@/components/IngredientList/IngredientItem/IngredientItem';
 import { UI_COLORS } from '@/utils/colors';
 import { BENTO_DESIGNER_CONFIG } from '@/constants/bentoDesigner';
 
@@ -24,31 +26,46 @@ export function BentoDesigner(props: BentoDesignerProps) {
   const [isAddIngredientModalVisible, setIsAddIngredientModalVisible] = useState(false);
   const [ingredients, setIngredients] = useState<Ingredient[]>(getInitialIngredients());
   
+  // Drag state management
+  const [draggedIngredient, setDraggedIngredient] = useState<Ingredient | undefined>(undefined);
+  const [dragPosition, setDragPosition] = useState<DragPosition | undefined>(undefined);
+  
   const bentoBox = createBentoBox(BENTO_DESIGNER_CONFIG.DEFAULT_BENTO_BOX);
 
-  // Load user ingredients on component mount
+  // Load user ingredients and placed ingredients on component mount
   useEffect(() => {
-    const loadIngredients = async () => {
+    const loadData = async () => {
       try {
+        // Load user ingredients
         await IngredientService.loadUserIngredients();
         const allIngredients = await IngredientService.getAllWithUserIngredients();
         setIngredients(allIngredients);
+        
+        // Load placed ingredients
+        const savedPlacedIngredients = await PlacedIngredientService.loadFromStorage();
+        setPlacedIngredients(savedPlacedIngredients);
       } catch (error) {
-        console.error('Failed to load user ingredients:', error);
-        // Fallback to initial ingredients if user ingredients fail to load
+        console.error('Failed to load data:', error);
+        // Fallback to initial ingredients if loading fails
         setIngredients(getInitialIngredients());
+        setPlacedIngredients([]);
       }
     };
     
-    loadIngredients();
+    loadData();
   }, []);
 
   const handleSuggestion = () => {
     setIsModalVisible(true);
   };
 
-  const handleClear = () => {
-    setPlacedIngredients([]);
+  const handleClear = async () => {
+    try {
+      setPlacedIngredients([]);
+      await PlacedIngredientService.saveToStorage([]);
+    } catch (error) {
+      console.error('Failed to clear placed ingredients:', error);
+    }
   };
 
   const handleAddIngredient = () => {
@@ -81,6 +98,16 @@ export function BentoDesigner(props: BentoDesignerProps) {
     setIsModalVisible(false);
   };
 
+  // Drag handlers
+  const handleDragStart = (ingredient: Ingredient) => {
+    setDraggedIngredient(ingredient);
+  };
+
+  const handleDragEnd = (ingredient: Ingredient, position: DragPosition) => {
+    setDragPosition(position);
+    // Note: actual drop handling is done in BentoBoxCanvas handleDrop
+  };
+
   const handleSuggestionAdopt = (suggestion: SuggestionResult) => {
     // TODO: Implement suggestion adoption logic
     closeModal();
@@ -90,9 +117,35 @@ export function BentoDesigner(props: BentoDesignerProps) {
     // TODO: Implement next suggestion logic
   };
 
-  const handleIngredientDrop = (ingredient: Ingredient, dropInfo: DropInfo) => {
-    // TODO: Implement drop logic with proper validation
-    console.log('Ingredient dropped:', ingredient, dropInfo);
+  const handleIngredientDrop = async (ingredient: Ingredient, dropInfo: DropInfo) => {
+    try {
+      // Create placed ingredient
+      const placedIngredient = PlacedIngredientService.createPlacedIngredient({
+        ingredientId: ingredient.id,
+        partitionId: dropInfo.partitionId,
+        position: dropInfo.position,
+        size: ingredient.defaultSize
+      });
+      
+      // Add to local state
+      const updatedPlacedIngredients = PlacedIngredientService.addPlacedIngredient(
+        placedIngredients,
+        placedIngredient
+      );
+      setPlacedIngredients(updatedPlacedIngredients);
+      
+      // Save to storage
+      await PlacedIngredientService.saveToStorage(updatedPlacedIngredients);
+      
+      // Clear drag state
+      setDraggedIngredient(undefined);
+      setDragPosition(undefined);
+    } catch (error) {
+      console.error('Failed to place ingredient:', error);
+      // Clear drag state even on error
+      setDraggedIngredient(undefined);
+      setDragPosition(undefined);
+    }
   };
 
   const hasPlacedIngredients = placedIngredients.length > 0;
@@ -105,6 +158,8 @@ export function BentoDesigner(props: BentoDesignerProps) {
           bentoBox={bentoBox}
           placedIngredients={placedIngredients}
           onIngredientDrop={handleIngredientDrop}
+          draggedIngredient={draggedIngredient}
+          dragPosition={dragPosition}
         />
       </View>
       
@@ -112,6 +167,8 @@ export function BentoDesigner(props: BentoDesignerProps) {
       <View style={styles.ingredientContainer}>
         <IngredientList
           ingredients={ingredients}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
         />
       </View>
       
