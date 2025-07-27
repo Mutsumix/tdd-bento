@@ -1,11 +1,6 @@
 # TODO リスト
 
 ## In Progress
-- [🔄 REFACTOR] 提案アルゴリズム（コスト重視）の実装 - リファクタリング中
-  - Started: 2025-01-27 14:50
-  - Goal: 総コストが低いほど高スコアとなるコスト重視アルゴリズム（score = 1000 - totalCost）
-  - Red completed: 2025-01-27 15:00
-  - Green completed: 2025-01-27 15:05
 
 ## Next
 - [ ] SuggestionModalの実装
@@ -53,3 +48,6 @@
 - [✅] 提案アルゴリズム（季節感重視）の実装 (2025-01-27 14:40)
   - Red/Green/Refactor/Feedback 全段階完了
   - 成果: 季節マッチングアルゴリズム実装、日本四季対応、getCurrentSeason()実装、35テスト全合格
+- [✅] 提案アルゴリズム（コスト重視）の実装 (2025-01-27 15:15)
+  - Red/Green/Refactor/Feedback 全段階完了
+  - 成果: コスト逆比例アルゴリズム実装、価格帯しきい値外部化、8テスト全合格、負スコア対応

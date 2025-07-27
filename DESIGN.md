@@ -1337,6 +1337,85 @@ private static getSeasonNameJP(season: Season): string {
 3. **オプショナル設計**: 引数の省略可能性による使いやすさ向上
 4. **文化的配慮**: 日本語表示による親しみやすいユーザー体験
 
+### 提案アルゴリズム（コスト重視）の実装洞察
+
+#### シンプルで効果的なスコア計算式
+```typescript
+// 逆比例の単純明快な計算式
+static calculateCostScore(ingredient: Ingredient): number {
+  return SUGGESTION_CONFIG.COST.BASE_VALUE - ingredient.cost;
+}
+
+// BASE_VALUE: 1000円を基準値として設定
+// 50円の食材 → 950点（高スコア）
+// 500円の食材 → 500点（低スコア）
+// 1200円の食材 → -200点（負スコア許容）
+```
+
+#### 価格帯別ユーザビリティの配慮
+```typescript
+// 段階的な価格帯による直感的な理由表示
+private static getCostReason(ingredient: Ingredient): string {
+  const thresholds = SUGGESTION_CONFIG.COST.THRESHOLDS;
+  
+  if (cost <= thresholds.VERY_CHEAP) return 'とても安価でお得';      // ≤50円
+  else if (cost <= thresholds.CHEAP) return '安価でコスパ良好';      // ≤100円
+  else if (cost <= thresholds.STANDARD) return '標準的な価格';       // ≤200円
+  else if (cost <= thresholds.EXPENSIVE) return 'やや高価';         // ≤400円
+  else return '高価な食材';                                          // >400円
+}
+```
+
+#### TDD実装の成果
+- **8個の包括的テストケース**: 低コスト・高コスト・ゼロコスト・基準値超過を完全検証
+- **境界値テスト**: 負スコア許容による柔軟な価格対応
+- **ソート機能**: 複数食材の価格優先順位付け
+- **統合テスト**: getSuggestionsWithScoresでの一貫した動作確認
+
+#### リファクタリングによる品質向上
+```typescript
+// Before: ハードコーディングされた価格帯
+if (cost <= 50) return 'とても安価でお得';
+else if (cost <= 100) return '安価でコスパ良好';
+
+// After: 設定外部化による保守性向上
+const thresholds = SUGGESTION_CONFIG.COST.THRESHOLDS;
+if (cost <= thresholds.VERY_CHEAP) return 'とても安価でお得';
+else if (cost <= thresholds.CHEAP) return '安価でコスパ良好';
+```
+
+#### アーキテクチャ上の利点
+1. **計算効率**: O(1)の定数時間計算で高速処理
+2. **設定駆動**: 価格帯しきい値の動的調整が容易
+3. **負スコア許容**: 高価格食材への柔軟な対応
+4. **拡張性**: 他のアルゴリズムとの一貫したパターン
+
+#### 現実的な価格設定との整合性
+- **VERY_CHEAP (≤50円)**: 調味料系（梅干し、たくあん）
+- **CHEAP (≤100円)**: 基本食材（ごはん、野菜類）
+- **STANDARD (≤200円)**: 一般的な加工品
+- **EXPENSIVE (≤400円)**: 高品質食材
+- **高価 (>400円)**: プレミアム食材
+
+#### パフォーマンス特性
+```typescript
+// メモリ効率: 軽量な数値計算のみ
+// CPU効率: 分岐処理最小化
+// スケーラビリティ: 食材数に比例する線形時間
+```
+
+#### 今後の拡張可能性
+- **動的価格**: 市場価格との連動機能
+- **価格帯カスタマイズ**: ユーザー別しきい値設定
+- **コストパフォーマンス**: 栄養価とコストの総合評価
+- **予算管理**: 目標予算に基づく食材選択支援
+
+#### 学習ポイント
+1. **単純性の威力**: 複雑化せずシンプルな計算式で十分な価値提供
+2. **設定の重要性**: ビジネスルールの外部化による柔軟性確保
+3. **負値の許容**: 制約を緩めることで現実的な対応力向上
+4. **段階的UX**: 価格帯による直感的なフィードバック提供
+
 ## 今後の拡張ポイント
 1. 仕切りの自由配置
 2. お弁当箱形状の追加
