@@ -5,6 +5,7 @@ import { IngredientList } from '@/components/IngredientList';
 import { ActionBar } from '@/components/ActionBar';
 import { SuggestionModal } from '@/components/SuggestionModal';
 import { AddIngredientModal } from '@/components/AddIngredientModal';
+import { ErrorMessage } from '@/components/ErrorMessage';
 import { getInitialIngredients } from '@/data/initialIngredients';
 import { createBentoBox } from '@/utils/bentoBox';
 import { PlacedIngredient, Ingredient } from '@/types';
@@ -13,11 +14,13 @@ import { IngredientService } from '@/services/ingredientService';
 import { DropInfo } from '@/components/BentoBoxCanvas/BentoBoxCanvas';
 import { PlacedIngredientService } from '@/services/placedIngredientService';
 import { useDragState } from '@/hooks/useDragState';
+import { useErrorState } from '@/hooks/useErrorState';
 import { DragPosition } from '@/components/IngredientList/IngredientItem/IngredientItem';
 import { DRAG_DROP_ERRORS } from '@/constants/dragDrop';
 import { validateDrop } from '@/utils/dragDropValidation';
 import { UI_COLORS } from '@/utils/colors';
 import { BENTO_DESIGNER_CONFIG } from '@/constants/bentoDesigner';
+import { getErrorMessage } from '@/constants/errorMessages';
 
 export interface BentoDesignerProps {
   // Optional props for customization
@@ -38,6 +41,9 @@ export function BentoDesigner(props: BentoDesignerProps) {
     endDrag
   } = useDragState();
   
+  // Error state management
+  const { error, setError, clearError } = useErrorState();
+  
   const bentoBox = useMemo(
     () => createBentoBox(BENTO_DESIGNER_CONFIG.DEFAULT_BENTO_BOX),
     []
@@ -57,6 +63,7 @@ export function BentoDesigner(props: BentoDesignerProps) {
         setPlacedIngredients(savedPlacedIngredients);
       } catch (error) {
         console.error(DRAG_DROP_ERRORS.STORAGE_LOAD_FAILED, error);
+        setError(getErrorMessage('STORAGE_LOAD_FAILED'));
         // Fallback to initial ingredients if loading fails
         setIngredients(getInitialIngredients());
         setPlacedIngredients([]);
@@ -76,6 +83,7 @@ export function BentoDesigner(props: BentoDesignerProps) {
       await PlacedIngredientService.saveToStorage([]);
     } catch (error) {
       console.error(DRAG_DROP_ERRORS.CLEAR_FAILED, error);
+      setError(getErrorMessage('CLEAR_FAILED'));
     }
   };
 
@@ -96,8 +104,8 @@ export function BentoDesigner(props: BentoDesignerProps) {
       setIsAddIngredientModalVisible(false);
     } catch (error) {
       console.error('Failed to save ingredient:', error);
-      // TODO: Show user-friendly error message in future iterations
-      // For now, keep modal open so user can retry
+      setError(getErrorMessage('INGREDIENT_SAVE_FAILED'));
+      // Keep modal open so user can retry
     }
   };
 
@@ -119,9 +127,94 @@ export function BentoDesigner(props: BentoDesignerProps) {
     // Note: actual drop handling is done in BentoBoxCanvas handleDrop
   };
 
-  const handleSuggestionAdopt = (suggestion: SuggestionResult) => {
-    // TODO: Implement suggestion adoption logic
-    closeModal();
+  const handleSuggestionAdopt = async (suggestion: SuggestionResult) => {
+    try {
+      // Clear existing placed ingredients
+      const newPlacedIngredients = await adoptSuggestions([suggestion]);
+      setPlacedIngredients(newPlacedIngredients);
+      
+      // Save to storage
+      await PlacedIngredientService.saveToStorage(newPlacedIngredients);
+      
+      // Close modal
+      closeModal();
+    } catch (error) {
+      console.error('Failed to adopt suggestion:', error);
+      setError(getErrorMessage('SUGGESTION_ADOPT_FAILED'));
+      // Keep modal open on error so user can retry
+    }
+  };
+
+  const handleSuggestionAdoptAll = async (suggestions: SuggestionResult[]) => {
+    try {
+      // Clear existing placed ingredients and place all suggestions
+      const newPlacedIngredients = await adoptSuggestions(suggestions);
+      setPlacedIngredients(newPlacedIngredients);
+      
+      // Save to storage
+      await PlacedIngredientService.saveToStorage(newPlacedIngredients);
+      
+      // Close modal
+      closeModal();
+    } catch (error) {
+      console.error('Failed to adopt suggestions:', error);
+      setError(getErrorMessage('SUGGESTION_ADOPT_FAILED'));
+      // Keep modal open on error so user can retry
+    }
+  };
+
+  // Helper function to adopt suggestions and return new placed ingredients
+  const adoptSuggestions = async (suggestions: SuggestionResult[]): Promise<PlacedIngredient[]> => {
+    const newPlacedIngredients: PlacedIngredient[] = [];
+    const partitions = bentoBox.partitions;
+    
+    if (suggestions.length === 0 || partitions.length === 0) {
+      return newPlacedIngredients;
+    }
+    
+    // Placement configuration constants
+    const PLACEMENT_CONFIG = {
+      STARTING_OFFSET: { x: 10, y: 10 },
+      INGREDIENT_SPACING: 5,
+      MIN_PARTITION_MARGIN: 5
+    };
+    
+    // Initialize placement positions for each partition
+    const partitionPlacements = partitions.map(() => ({ 
+      ...PLACEMENT_CONFIG.STARTING_OFFSET 
+    }));
+    
+    for (let i = 0; i < suggestions.length; i++) {
+      const suggestion = suggestions[i];
+      const partitionIndex = i % partitions.length;
+      const partition = partitions[partitionIndex];
+      const currentPosition = partitionPlacements[partitionIndex];
+      
+      // Create placed ingredient with current position
+      const placedIngredient = PlacedIngredientService.createPlacedIngredient({
+        ingredientId: suggestion.ingredient.id,
+        partitionId: partition.id,
+        position: { x: currentPosition.x, y: currentPosition.y },
+        size: suggestion.ingredient.defaultSize
+      });
+      
+      newPlacedIngredients.push(placedIngredient);
+      
+      // Calculate next position
+      const nextY = currentPosition.y + suggestion.ingredient.defaultSize.height + PLACEMENT_CONFIG.INGREDIENT_SPACING;
+      const maxY = partition.bounds.height - PLACEMENT_CONFIG.MIN_PARTITION_MARGIN;
+      
+      if (nextY + suggestion.ingredient.defaultSize.height <= maxY) {
+        // Place next ingredient below current one
+        currentPosition.y = nextY;
+      } else {
+        // Wrap to next column
+        currentPosition.x += suggestion.ingredient.defaultSize.width + PLACEMENT_CONFIG.INGREDIENT_SPACING;
+        currentPosition.y = PLACEMENT_CONFIG.STARTING_OFFSET.y;
+      }
+    }
+    
+    return newPlacedIngredients;
   };
 
   const handleSuggestionNext = () => {
@@ -166,6 +259,7 @@ export function BentoDesigner(props: BentoDesignerProps) {
       endDrag();
     } catch (error) {
       console.error(DRAG_DROP_ERRORS.PLACEMENT_FAILED, error);
+      setError(getErrorMessage('PLACEMENT_FAILED'));
       // Clear drag state even on error
       endDrag();
     }
@@ -209,6 +303,7 @@ export function BentoDesigner(props: BentoDesignerProps) {
           visible={isModalVisible}
           ingredients={ingredients}
           onAdopt={handleSuggestionAdopt}
+          onAdoptAll={handleSuggestionAdoptAll}
           onNext={handleSuggestionNext}
           onCancel={closeModal}
         />
@@ -219,6 +314,13 @@ export function BentoDesigner(props: BentoDesignerProps) {
         visible={isAddIngredientModalVisible}
         onSave={handleIngredientSave}
         onCancel={closeAddIngredientModal}
+      />
+
+      {/* エラーメッセージ */}
+      <ErrorMessage 
+        error={error}
+        onDismiss={clearError}
+        autoDismissMs={5000}
       />
     </View>
   );
