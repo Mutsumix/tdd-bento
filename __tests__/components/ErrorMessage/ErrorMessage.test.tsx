@@ -13,12 +13,13 @@ describe('ErrorMessage', () => {
 
   it('should render error message when error is present', () => {
     const errorMessage = '食材の保存に失敗しました';
-    const { getByTestId, getByText } = render(
+    const { getByTestId } = render(
       <ErrorMessage error={errorMessage} onDismiss={() => {}} />
     );
     
     expect(getByTestId('error-message')).toBeTruthy();
-    expect(getByText(errorMessage)).toBeTruthy();
+    expect(getByTestId('error-message-text')).toBeTruthy();
+    expect(getByTestId('error-message-text').props.children).toBe(errorMessage);
   });
 
   it('should display close button', () => {
@@ -103,5 +104,66 @@ describe('ErrorMessage', () => {
     
     const errorComponent = getByTestId('error-message');
     expect(errorComponent.props.style).toBeTruthy();
+  });
+
+  it('should support custom testID', () => {
+    const errorMessage = 'カスタムテストID';
+    const customTestID = 'custom-error';
+    const { getByTestId, queryByTestId } = render(
+      <ErrorMessage 
+        error={errorMessage} 
+        onDismiss={() => {}} 
+        testID={customTestID}
+      />
+    );
+    
+    expect(getByTestId(customTestID)).toBeTruthy();
+    expect(getByTestId(`${customTestID}-text`)).toBeTruthy();
+    expect(getByTestId(`${customTestID}-close`)).toBeTruthy();
+    expect(queryByTestId('error-message')).toBeNull();
+  });
+
+  it('should render at bottom position when specified', () => {
+    const errorMessage = 'ボトムポジション';
+    const { getByTestId } = render(
+      <ErrorMessage 
+        error={errorMessage} 
+        onDismiss={() => {}} 
+        position="bottom"
+      />
+    );
+    
+    const errorComponent = getByTestId('error-message');
+    expect(errorComponent.props.style).toEqual(
+      expect.objectContaining({
+        bottom: 50
+      })
+    );
+  });
+
+  it('should render at top position by default', () => {
+    const errorMessage = 'トップポジション';
+    const { getByTestId } = render(
+      <ErrorMessage error={errorMessage} onDismiss={() => {}} />
+    );
+    
+    const errorComponent = getByTestId('error-message');
+    expect(errorComponent.props.style).toEqual(
+      expect.objectContaining({
+        top: 50
+      })
+    );
+  });
+
+  it('should have proper accessibility attributes', () => {
+    const errorMessage = 'アクセシビリティテスト';
+    const { getByTestId } = render(
+      <ErrorMessage error={errorMessage} onDismiss={() => {}} />
+    );
+    
+    const closeButton = getByTestId('error-message-close');
+    
+    expect(closeButton.props.accessibilityRole).toBe('button');
+    expect(closeButton.props.accessibilityLabel).toBe('エラーメッセージを閉じる');
   });
 });

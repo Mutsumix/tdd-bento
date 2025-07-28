@@ -9,6 +9,7 @@ export interface SuggestionModalProps {
   visible: boolean;
   ingredients: Ingredient[];
   onAdopt: (suggestion: SuggestionResult) => void;
+  onAdoptAll?: (suggestions: SuggestionResult[]) => void;
   onNext: () => void;
   onCancel: () => void;
 }
@@ -17,6 +18,7 @@ export function SuggestionModal({
   visible,
   ingredients,
   onAdopt,
+  onAdoptAll,
   onNext,
   onCancel
 }: SuggestionModalProps) {
@@ -48,6 +50,12 @@ export function SuggestionModal({
   const handleAdopt = () => {
     if (suggestions.length > 0 && suggestions[currentIndex]) {
       onAdopt(suggestions[currentIndex]);
+    }
+  };
+
+  const handleAdoptAll = () => {
+    if (suggestions.length > 0 && onAdoptAll) {
+      onAdoptAll(suggestions);
     }
   };
 
@@ -113,16 +121,25 @@ export function SuggestionModal({
             <TouchableOpacity
               style={[styles.actionButton, styles.adoptButton]}
               onPress={handleAdopt}
-              testID="action-adopt"
+              testID="suggestion-adopt"
               disabled={!currentSuggestion}
             >
               <Text style={styles.buttonText}>採用</Text>
             </TouchableOpacity>
             
             <TouchableOpacity
+              style={[styles.actionButton, styles.adoptAllButton]}
+              onPress={handleAdoptAll}
+              testID="suggestion-adopt-all"
+              disabled={suggestions.length === 0}
+            >
+              <Text style={styles.buttonText}>すべて採用</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
               style={[styles.actionButton, styles.nextButton]}
               onPress={handleNext}
-              testID="action-next"
+              testID="suggestion-next"
               disabled={suggestions.length <= 1}
             >
               <Text style={styles.buttonText}>次の提案</Text>
@@ -131,7 +148,7 @@ export function SuggestionModal({
             <TouchableOpacity
               style={[styles.actionButton, styles.cancelButton]}
               onPress={onCancel}
-              testID="action-cancel"
+              testID="suggestion-cancel"
             >
               <Text style={styles.buttonText}>キャンセル</Text>
             </TouchableOpacity>
@@ -242,6 +259,9 @@ const styles = StyleSheet.create({
   },
   adoptButton: {
     backgroundColor: UI_COLORS.success,
+  },
+  adoptAllButton: {
+    backgroundColor: UI_COLORS.primary,
   },
   nextButton: {
     backgroundColor: UI_COLORS.primary,

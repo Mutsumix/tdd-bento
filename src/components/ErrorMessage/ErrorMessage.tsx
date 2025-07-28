@@ -9,13 +9,23 @@ export interface ErrorMessageProps {
   onDismiss: () => void;
   /** Auto-dismiss duration in milliseconds. If not provided, won't auto-dismiss */
   autoDismissMs?: number;
+  /** Position of the error message. Defaults to 'top' */
+  position?: 'top' | 'bottom';
+  /** Test ID for the component */
+  testID?: string;
 }
 
 /**
  * Component for displaying user-friendly error messages
  * Supports manual dismiss and optional auto-dismiss
  */
-export function ErrorMessage({ error, onDismiss, autoDismissMs }: ErrorMessageProps) {
+export function ErrorMessage({ 
+  error, 
+  onDismiss, 
+  autoDismissMs, 
+  position = 'top',
+  testID = 'error-message'
+}: ErrorMessageProps) {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Setup auto-dismiss timer
@@ -41,14 +51,27 @@ export function ErrorMessage({ error, onDismiss, autoDismissMs }: ErrorMessagePr
   }
 
   return (
-    <View style={styles.container} testID="error-message">
+    <View 
+      style={[
+        styles.container, 
+        position === 'bottom' ? styles.bottomPosition : styles.topPosition
+      ]} 
+      testID={testID}
+    >
       <View style={styles.messageContainer}>
-        <Text style={styles.messageText}>{error}</Text>
+        <Text 
+          style={styles.messageText} 
+          accessibilityRole="alert"
+          testID={`${testID}-text`}
+        >
+          {error}
+        </Text>
         <TouchableOpacity
           style={styles.closeButton}
           onPress={onDismiss}
-          testID="error-message-close"
+          testID={`${testID}-close`}
           accessibilityLabel="エラーメッセージを閉じる"
+          accessibilityRole="button"
         >
           <Text style={styles.closeButtonText}>×</Text>
         </TouchableOpacity>
@@ -60,10 +83,15 @@ export function ErrorMessage({ error, onDismiss, autoDismissMs }: ErrorMessagePr
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: 50,
     left: 16,
     right: 16,
     zIndex: 1000,
+  },
+  topPosition: {
+    top: 50,
+  },
+  bottomPosition: {
+    bottom: 50,
   },
   messageContainer: {
     backgroundColor: UI_COLORS.destructive,

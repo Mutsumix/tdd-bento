@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 /**
  * Hook for managing error state
@@ -11,20 +11,26 @@ export function useErrorState() {
    * Set error message
    * @param errorMessage The error message to display
    */
-  const setError = (errorMessage: string | null) => {
+  const setError = useCallback((errorMessage: string | null) => {
     setErrorState(errorMessage);
-  };
+  }, []);
 
   /**
    * Clear current error message
    */
-  const clearError = () => {
+  const clearError = useCallback(() => {
     setErrorState(null);
-  };
+  }, []);
+
+  /**
+   * Check if there is an active error
+   */
+  const hasError = error !== null;
 
   return {
     error,
     setError,
-    clearError
+    clearError,
+    hasError
   };
 }

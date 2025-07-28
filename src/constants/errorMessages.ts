@@ -21,6 +21,18 @@ export type ErrorMessageKey = keyof typeof ERROR_MESSAGES;
  * @param errorType The type of error that occurred
  * @returns User-friendly error message in Japanese
  */
-export function getErrorMessage(errorType: ErrorMessageKey): string {
-  return ERROR_MESSAGES[errorType] || ERROR_MESSAGES.UNKNOWN_ERROR;
+export function getErrorMessage(errorType: ErrorMessageKey | string): string {
+  if (errorType in ERROR_MESSAGES) {
+    return ERROR_MESSAGES[errorType as ErrorMessageKey];
+  }
+  return ERROR_MESSAGES.UNKNOWN_ERROR;
+}
+
+/**
+ * Check if an error type is valid
+ * @param errorType The error type to check
+ * @returns True if the error type is valid
+ */
+export function isValidErrorType(errorType: string): errorType is ErrorMessageKey {
+  return errorType in ERROR_MESSAGES;
 }

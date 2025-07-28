@@ -78,4 +78,37 @@ describe('useErrorState', () => {
     
     expect(result.current.error).toBeNull();
   });
+
+  it('should track hasError state correctly', () => {
+    const { result } = renderHook(() => useErrorState());
+    
+    // Initially no error
+    expect(result.current.hasError).toBe(false);
+    
+    // Set error
+    act(() => {
+      result.current.setError('テストエラー');
+    });
+    
+    expect(result.current.hasError).toBe(true);
+    
+    // Clear error
+    act(() => {
+      result.current.clearError();
+    });
+    
+    expect(result.current.hasError).toBe(false);
+  });
+
+  it('should maintain function reference stability', () => {
+    const { result, rerender } = renderHook(() => useErrorState());
+    
+    const initialSetError = result.current.setError;
+    const initialClearError = result.current.clearError;
+    
+    rerender({});
+    
+    expect(result.current.setError).toBe(initialSetError);
+    expect(result.current.clearError).toBe(initialClearError);
+  });
 });
