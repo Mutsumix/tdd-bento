@@ -1,11 +1,6 @@
 # TODO リスト
 
 ## In Progress
-- [🔄 REFACTOR] ユーザーフレンドリーなエラーメッセージ機能の追加 - リファクタリング中
-  - Started: 2025-01-28 01:35
-  - Goal: コンソールエラーの代わりにユーザーに分かりやすい日本語メッセージを表示する機能
-  - Red completed: 2025-01-28 01:45
-  - Green completed: 2025-01-28 02:05
 
 ## Next
 
@@ -74,3 +69,6 @@
 - [✅] 提案アルゴリズムの統合と食材配置への適用 (2025-01-28 01:25)
   - Red/Green/Refactor/Feedback 全段階完了
   - 成果: SuggestionModal統合、提案採用機能、自動配置アルゴリズム、8テスト全合格、品質向上リファクタリング
+- [✅] ユーザーフレンドリーなエラーメッセージ機能の追加 (2025-01-28 02:15)
+  - Red/Green/Refactor/Feedback 全段階完了
+  - 成果: ErrorMessage Component（自動消去・位置設定・アクセシビリティ）、useErrorState Hook（関数参照安定性・hasError）、統一エラーメッセージ定数、型安全性（ErrorMessageKey）、全20テスト合格、DESIGN.md更新完了

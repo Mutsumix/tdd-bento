@@ -596,6 +596,43 @@ const STORAGE_KEYS = {
 - **意図的なエラー処理**: データ破損時の graceful degradation
 - **テスト観点**: エラーケースの網羅的なテスト設計
 
+##### ✅ ユーザーフレンドリーエラーハンドリング（TDD実装完了）
+**実装パターン**: console.error → setError(getErrorMessage())への統一
+
+```typescript
+// 1. 中央集約化されたエラーメッセージ定数
+export const ERROR_MESSAGES = {
+  INGREDIENT_SAVE_FAILED: '食材の保存に失敗しました。もう一度お試しください。',
+  PLACEMENT_FAILED: '食材の配置に失敗しました。もう一度お試しください。',
+  // ...
+} as const;
+
+// 2. 型安全なエラーハンドリングhook  
+const { error, setError, clearError, hasError } = useErrorState();
+
+// 3. 統一的なエラーハンドリングパターン
+try {
+  await operation();
+} catch (error) {
+  console.error('Technical error:', error);  // 開発者向け
+  setError(getErrorMessage('OPERATION_FAILED'));  // ユーザー向け
+}
+
+// 4. 自動消去対応エラー表示コンポーネント
+<ErrorMessage 
+  error={error} 
+  onDismiss={clearError}
+  autoDismissMs={3000}
+  position="top"
+/>
+```
+
+**TDD実装プロセス**: RED → GREEN → REFACTOR → FEEDBACK
+- **RED**: エラーハンドリングテストの作成（12テスト、8テスト）
+- **GREEN**: 最小実装によるテスト通過
+- **REFACTOR**: useCallback、hasError、位置設定、カスタムtestIDの追加
+- **FEEDBACK**: 設計ドキュメント更新（本セクション）
+
 #### 今後の拡張予定
 ```typescript
 // 可能な拡張ポイント
@@ -953,7 +990,13 @@ useEffect(() => {
 
 #### 3. エラー時のモーダルUX設計
 **現在の実装**: エラー時にモーダルを開いたままにしてリトライ機会を提供
-**今後の改善予定**: ユーザーフレンドリーなエラーメッセージ表示機能
+**✅ 実装完了**: ユーザーフレンドリーなエラーメッセージ表示機能
+
+##### 統一エラーハンドリングシステム
+- **ErrorMessage Component**: 自動消去、位置設定、アクセシビリティ対応
+- **useErrorState Hook**: 関数参照安定性とhasErrorプロパティ
+- **エラーメッセージ定数**: 日本語で統一されたユーザー向けメッセージ
+- **Type Safety**: ErrorMessageKey型による実行時安全性
 
 ### テスト戦略
 
